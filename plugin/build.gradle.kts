@@ -28,6 +28,8 @@ dependencies {
     api("com.badlogicgames.gdx:gdx:${project.properties["libgdxVersion"]}")
     kapt("org.pf4j:pf4j:${project.properties["pf4jVersion"]}")
 
+    api(project(":runtime"))
+
     implementation("com.github.jamestkhan.mundus:commons:${project.properties["mundusVersion"]}")
     implementation("com.github.jamestkhan.mundus:plugin-api:${project.properties["mundusVersion"]}")
     implementation("com.github.jamestkhan.mundus:editor-commons:${project.properties["mundusVersion"]}")
@@ -41,7 +43,9 @@ java {
 }
 
 tasks.withType<Jar> {
-    archiveFileName.set("your-plugin.jar")
+    dependsOn(":runtime:jar")
+
+    archiveFileName.set("terrain-objects.jar")
 
     // Otherwise you'll get a "No main manifest attribute" error
     manifest {
