@@ -11,4 +11,4 @@ plugins {
 }
 
 rootProject.name = "mundus-terrain-objects-plugin"
-include("plugin")
+include("plugin", "runtime")

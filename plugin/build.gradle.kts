@@ -45,11 +45,22 @@ tasks.withType<Jar> {
 
     // Otherwise you'll get a "No main manifest attribute" error
     manifest {
-        attributes["Plugin-Class"]= "com.github.dgzt.mundus.plugin.terrainobjects.TerrainObjectsPlugin"
+        attributes["Plugin-Class"]= "com.github.dgzt.mundus.plugin.terrainobjects.plugin.TerrainObjectsPlugin"
         attributes["Plugin-Id"] = "terrain-objects-plugin"
         attributes["Plugin-Provider"] = "Tibor Zsuro (Dgzt)"
         attributes["Plugin-Version"] = "0.0.1"
     }
+
+    // Include runtime in jar file
+    val dependencies = configurations
+        .runtimeClasspath
+        .get()
+        .filter {
+            it.name.equals("runtime.jar")
+        }
+        .map(::zipTree)
+    from(dependencies)
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 tasks.named<Test>("test") {

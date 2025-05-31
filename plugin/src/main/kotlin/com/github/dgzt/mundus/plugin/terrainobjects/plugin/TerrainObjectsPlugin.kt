@@ -1,4 +1,4 @@
-package com.github.dgzt.mundus.plugin.terrainobjects
+package com.github.dgzt.mundus.plugin.terrainobjects.plugin
 
 import com.mbrlabs.mundus.pluginapi.MenuExtension
 import com.mbrlabs.mundus.pluginapi.ui.RootWidget
