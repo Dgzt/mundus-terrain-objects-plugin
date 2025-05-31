@@ -17,6 +17,8 @@ public class TerrainObjectsComponent extends AbstractComponent {
 
     @Override
     public Component clone(final GameObject go) {
-        return null;
+        final TerrainObjectsComponent cloned = new TerrainObjectsComponent(go);
+        // TODO type
+        return cloned;
     }
 }
