@@ -30,9 +30,9 @@ dependencies {
 
     api(project(":runtime"))
 
-    implementation("com.github.jamestkhan.mundus:commons:${project.properties["mundusVersion"]}")
-    implementation("com.github.jamestkhan.mundus:plugin-api:${project.properties["mundusVersion"]}")
-    implementation("com.github.jamestkhan.mundus:editor-commons:${project.properties["mundusVersion"]}")
+    implementation("com.github.Dgzt.Mundus:commons:${project.properties["mundusVersion"]}")
+    implementation("com.github.Dgzt.Mundus:plugin-api:${project.properties["mundusVersion"]}")
+    implementation("com.github.Dgzt.Mundus:editor-commons:${project.properties["mundusVersion"]}")
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
