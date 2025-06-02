@@ -1,5 +1,6 @@
 package com.github.dgzt.mundus.plugin.terrainobjects.runtime.component;
 
+import com.github.dgzt.mundus.plugin.terrainobjects.runtime.constant.PluginConstants;
 import com.mbrlabs.mundus.commons.scene3d.GameObject;
 import com.mbrlabs.mundus.commons.scene3d.components.AbstractComponent;
 import com.mbrlabs.mundus.commons.scene3d.components.Component;
@@ -8,6 +9,7 @@ public class TerrainObjectsComponent extends AbstractComponent {
 
     public TerrainObjectsComponent(final GameObject go) {
         super(go);
+        setType(PluginConstants.TYPE);
     }
 
     @Override
@@ -17,8 +19,6 @@ public class TerrainObjectsComponent extends AbstractComponent {
 
     @Override
     public Component clone(final GameObject go) {
-        final TerrainObjectsComponent cloned = new TerrainObjectsComponent(go);
-        // TODO type
-        return cloned;
+        return new TerrainObjectsComponent(go);
     }
 }
