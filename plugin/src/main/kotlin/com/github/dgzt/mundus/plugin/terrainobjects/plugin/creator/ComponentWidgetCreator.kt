@@ -9,10 +9,12 @@ object ComponentWidgetCreator {
     fun setup(component: TerrainObjectsComponent, rootWidget: RootWidget) {
         rootWidget.addLabel("Objects:").setAlign(WidgetAlign.LEFT)
         rootWidget.addRow()
-        rootWidget.addTextureGrid()
+        val textureGrid = rootWidget.addTextureGrid().widget
         rootWidget.addRow()
         rootWidget.addTextButton("Add Object") {
-            // TODO
+            rootWidget.showModelAssetSelectionDialog {
+                textureGrid.addTexture(it)
+            }
         }.setAlign(WidgetAlign.RIGHT)
     }
 }
