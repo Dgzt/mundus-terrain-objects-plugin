@@ -1,5 +1,6 @@
 package com.github.dgzt.mundus.plugin.terrainobjects.runtime.converter;
 
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ObjectMap;
 import com.badlogic.gdx.utils.OrderedMap;
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.component.TerrainObjectsComponent;
@@ -20,6 +21,22 @@ public class TerrainObjectsComponentConverter implements CustomComponentConverte
     public OrderedMap<String, String> convert(final Component component) {
         final OrderedMap<String, String> map = new OrderedMap<>();
         return map;
+    }
+
+    @Override
+    public Array<String> getAssetIds(final Component component) {
+        if (!(component instanceof TerrainObjectsComponent)) {
+            return new Array<>();
+        }
+
+        final TerrainObjectsComponent terrainObjectsComponent = (TerrainObjectsComponent) component;
+
+        final Array<String> assetIds = new Array<>();
+        for (int i = 0; i < terrainObjectsComponent.getModelAssets().size; ++i) {
+            assetIds.add(terrainObjectsComponent.getModelAssets().get(i).getID());
+        }
+
+        return assetIds;
     }
 
     @Override

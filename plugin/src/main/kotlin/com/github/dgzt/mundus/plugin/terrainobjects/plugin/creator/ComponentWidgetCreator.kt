@@ -1,8 +1,13 @@
 package com.github.dgzt.mundus.plugin.terrainobjects.plugin.creator
 
 import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.files.FileHandle
+import com.badlogic.gdx.utils.Json
+import com.badlogic.gdx.utils.JsonWriter
+import com.github.dgzt.mundus.plugin.terrainobjects.plugin.PropertyManager
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.component.TerrainObjectsComponent
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.constant.PluginConstants
+import com.github.dgzt.mundus.plugin.terrainobjects.runtime.transformer.TerrainObjectsTransformer
 import com.mbrlabs.mundus.pluginapi.ui.RootWidget
 import com.mbrlabs.mundus.pluginapi.ui.TextureGrid
 import com.mbrlabs.mundus.pluginapi.ui.TextureGridListener
@@ -30,6 +35,22 @@ object ComponentWidgetCreator {
         rootWidget.addTextButton("Add Object") {
             rootWidget.showModelAssetSelectionDialog {
                 textureGrid.addTexture(it)
+
+                if (component.customAsset == null) {
+                    val tmpDir = System.getProperty("java.io.tmpdir")
+                    val tmpFile = FileHandle("$tmpDir/${component.gameObject.name}.terrainobjects")
+
+                    val json = Json(JsonWriter.OutputType.json)
+                    val assetJson = json.toJson(TerrainObjectsTransformer.convertToDTO(component))
+                    tmpFile.writeString(assetJson, false)
+
+                    val asset = PropertyManager.assetManager.createNewAsset(tmpFile)
+
+                    component.customAsset = asset
+                }
+
+                component.modelAssets.add(it)
+                PropertyManager.assetManager.markAsModifiedAsset(component.customAsset)
             }
         }.setAlign(WidgetAlign.RIGHT)
     }
