@@ -6,6 +6,8 @@ import com.badlogic.gdx.utils.OrderedMap;
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.component.TerrainObjectsComponent;
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.constant.PluginConstants;
 import com.mbrlabs.mundus.commons.assets.Asset;
+import com.mbrlabs.mundus.commons.assets.CustomAsset;
+import com.mbrlabs.mundus.commons.assets.ModelAsset;
 import com.mbrlabs.mundus.commons.mapper.CustomComponentConverter;
 import com.mbrlabs.mundus.commons.scene3d.GameObject;
 import com.mbrlabs.mundus.commons.scene3d.components.Component;
@@ -32,6 +34,10 @@ public class TerrainObjectsComponentConverter implements CustomComponentConverte
         final TerrainObjectsComponent terrainObjectsComponent = (TerrainObjectsComponent) component;
 
         final Array<String> assetIds = new Array<>();
+        if (terrainObjectsComponent.getCustomAsset() != null) {
+            assetIds.add(terrainObjectsComponent.getCustomAsset().getID());
+        }
+
         for (int i = 0; i < terrainObjectsComponent.getModelAssets().size; ++i) {
             assetIds.add(terrainObjectsComponent.getModelAssets().get(i).getID());
         }
@@ -42,6 +48,16 @@ public class TerrainObjectsComponentConverter implements CustomComponentConverte
     @Override
     public Component convert(final GameObject gameObject, final OrderedMap<String, String> orderedMap, final ObjectMap<String, Asset> objectMap) {
         final TerrainObjectsComponent component = new TerrainObjectsComponent(gameObject);
+
+        for (final String key : objectMap.keys()) {
+            final Asset asset = objectMap.get(key);
+            if (asset instanceof CustomAsset) {
+                component.setCustomAsset((CustomAsset) asset);
+            } else if (asset instanceof ModelAsset) {
+                component.getModelAssets().add((ModelAsset) asset);
+            }
+        }
+
         return component;
     }
 }
