@@ -2,8 +2,6 @@ package com.github.dgzt.mundus.plugin.terrainobjects.plugin.creator
 
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.files.FileHandle
-import com.badlogic.gdx.utils.Json
-import com.badlogic.gdx.utils.JsonWriter
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.PropertyManager
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.component.TerrainObjectsComponent
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.constant.PluginConstants
@@ -39,19 +37,22 @@ object ComponentWidgetCreator {
                 if (component.customAsset == null) {
                     val tmpDir = System.getProperty("java.io.tmpdir")
                     val tmpFile = FileHandle("$tmpDir/${component.gameObject.name}.terrainobjects")
-
-                    val json = Json(JsonWriter.OutputType.json)
-                    val assetJson = json.toJson(TerrainObjectsTransformer.convertToDTO(component))
-                    tmpFile.writeString(assetJson, false)
-
-                    val asset = PropertyManager.assetManager.createNewAsset(tmpFile)
-
-                    component.customAsset = asset
+                    saveComponent(component, tmpFile)
+                    component.customAsset = PropertyManager.assetManager.createNewAsset(tmpFile)
+                    tmpFile.delete()
                 }
 
                 component.modelAssets.add(it)
-                PropertyManager.assetManager.markAsModifiedAsset(component.customAsset)
+                PropertyManager.assetManager.markAsModifiedAsset(component.customAsset) {
+                    Gdx.app.debug(PluginConstants.LOG_TAG, "Save terrain objects asset for terrain: ${component.gameObject.name}")
+                    saveComponent(component, component.customAsset.file)
+                }
             }
         }.setAlign(WidgetAlign.RIGHT)
+    }
+
+    private fun saveComponent(component: TerrainObjectsComponent, file: FileHandle) {
+        val assetJson = PropertyManager.json.toJson(TerrainObjectsTransformer.convertToDTO(component))
+        file.writeString(assetJson, false)
     }
 }
