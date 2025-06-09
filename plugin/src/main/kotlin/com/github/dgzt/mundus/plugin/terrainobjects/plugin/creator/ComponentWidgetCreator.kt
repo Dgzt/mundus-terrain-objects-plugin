@@ -6,6 +6,7 @@ import com.github.dgzt.mundus.plugin.terrainobjects.plugin.PropertyManager
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.component.TerrainObjectsComponent
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.constant.PluginConstants
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.transformer.TerrainObjectsTransformer
+import com.mbrlabs.mundus.editorcommons.assets.EditorModelAsset
 import com.mbrlabs.mundus.pluginapi.ui.RootWidget
 import com.mbrlabs.mundus.pluginapi.ui.TextureGrid
 import com.mbrlabs.mundus.pluginapi.ui.TextureGridListener
@@ -29,6 +30,7 @@ object ComponentWidgetCreator {
         }
 
         textureGrid = rootWidget.addTextureGrid(true, true, textureGridListener).widget
+        setupTextureGridWidget(component, textureGrid)
         rootWidget.addRow()
         rootWidget.addTextButton("Add Object") {
             rootWidget.showModelAssetSelectionDialog {
@@ -49,6 +51,13 @@ object ComponentWidgetCreator {
                 }
             }
         }.setAlign(WidgetAlign.RIGHT)
+    }
+
+    private fun setupTextureGridWidget(component: TerrainObjectsComponent, textureGrid: TextureGrid) {
+        for (i in 0 until component.modelAssets.size) {
+            val model = component.modelAssets.get(i) as EditorModelAsset
+            textureGrid.addTexture(model)
+        }
     }
 
     private fun saveComponent(component: TerrainObjectsComponent, file: FileHandle) {
