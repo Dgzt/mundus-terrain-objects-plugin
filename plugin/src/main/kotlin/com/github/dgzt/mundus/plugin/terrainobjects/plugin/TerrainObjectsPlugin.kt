@@ -58,6 +58,7 @@ class TerrainObjectsPlugin : Plugin() {
     class TerrainObjectsManagerHolderExtension : ManagerHolderExtension {
         override fun managerHolder(managerHolder: ManagerHolder) {
             PropertyManager.assetManager = managerHolder.assetManager
+            PropertyManager.toolManager = managerHolder.toolManager
         }
 
     }

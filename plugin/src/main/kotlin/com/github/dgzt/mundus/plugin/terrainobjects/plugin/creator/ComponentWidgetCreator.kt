@@ -20,6 +20,10 @@ object ComponentWidgetCreator {
         var textureGrid: TextureGrid? = null
 
         val textureGridListener = object : TextureGridListener {
+            override fun onSelect(pos: Int) {
+                Gdx.app.log(PluginConstants.LOG_TAG, "Select: $pos")
+            }
+
             override fun onChange(pos: Int) {
                 Gdx.app.log(PluginConstants.LOG_TAG, "Change: $pos")
             }
