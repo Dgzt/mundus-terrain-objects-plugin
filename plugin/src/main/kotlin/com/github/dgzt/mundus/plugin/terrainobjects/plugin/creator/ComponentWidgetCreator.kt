@@ -84,6 +84,7 @@ object ComponentWidgetCreator {
             selectedModel.pos = pos
             selectedModel.modelAsset = component.modelAssets.get(pos)
 
+            objectButtonPanel.clearWidgets()
             setupObjectsButtonPanel(component.gameObject, objectButtonPanel, selectedModel)
         }
 
