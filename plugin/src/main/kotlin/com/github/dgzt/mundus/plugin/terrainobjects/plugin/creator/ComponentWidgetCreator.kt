@@ -2,10 +2,16 @@ package com.github.dgzt.mundus.plugin.terrainobjects.plugin.creator
 
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.files.FileHandle
+import com.badlogic.gdx.graphics.g3d.ModelInstance
+import com.badlogic.gdx.math.Vector3
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.PropertyManager
+import com.github.dgzt.mundus.plugin.terrainobjects.plugin.model.SelectedModel
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.component.TerrainObjectsComponent
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.constant.PluginConstants
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.transformer.TerrainObjectsTransformer
+import com.mbrlabs.mundus.commons.scene3d.GameObject
+import com.mbrlabs.mundus.commons.scene3d.components.Component
+import com.mbrlabs.mundus.commons.scene3d.components.TerrainComponent
 import com.mbrlabs.mundus.editorcommons.assets.EditorModelAsset
 import com.mbrlabs.mundus.pluginapi.listener.ToolListener
 import com.mbrlabs.mundus.pluginapi.ui.RootWidget
@@ -16,11 +22,13 @@ import com.mbrlabs.mundus.pluginapi.ui.WidgetAlign
 object ComponentWidgetCreator {
 
     fun setup(component: TerrainObjectsComponent, rootWidget: RootWidget) {
+        val selectedModel = SelectedModel()
+
         rootWidget.addLabel("Objects:").setAlign(WidgetAlign.LEFT)
         rootWidget.addRow()
         var textureGrid: TextureGrid
 
-        val textureGridListener = TextureGridListenerImpl()
+        val textureGridListener = TextureGridListenerImpl(component, selectedModel)
         textureGrid = rootWidget.addTextureGrid(true, true, textureGridListener).widget
         setupTextureGridWidget(component, textureGrid)
         rootWidget.addRow()
@@ -59,21 +67,24 @@ object ComponentWidgetCreator {
         file.writeString(assetJson, false)
     }
 
-    private fun setupObjectsButtonPanel(objectButtonPanel: RootWidget) {
+    private fun setupObjectsButtonPanel(gameObject: GameObject, objectButtonPanel: RootWidget, selectedModel: SelectedModel) {
         objectButtonPanel.addTextButton("Add") {
-            PropertyManager.toolManager.activateCustomTool(ToolListenerImpl())
+            PropertyManager.toolManager.activateCustomTool(ToolListenerImpl(gameObject, selectedModel))
         }
     }
 
-    private class TextureGridListenerImpl : TextureGridListener {
+    private class TextureGridListenerImpl(
+        val component: TerrainObjectsComponent,
+        val selectedModel: SelectedModel
+    ) : TextureGridListener {
         lateinit var objectButtonPanel: RootWidget
-        private var selectedModelId = -1
 
         override fun onSelect(pos: Int) {
             Gdx.app.log(PluginConstants.LOG_TAG, "Select: $pos")
-            selectedModelId = pos
+            selectedModel.pos = pos
+            selectedModel.modelAsset = component.modelAssets.get(pos)
 
-            setupObjectsButtonPanel(objectButtonPanel)
+            setupObjectsButtonPanel(component.gameObject, objectButtonPanel, selectedModel)
         }
 
         override fun onChange(pos: Int) {
@@ -85,17 +96,28 @@ object ComponentWidgetCreator {
         }
     }
 
-    private class ToolListenerImpl : ToolListener {
+    private class ToolListenerImpl(gameObject: GameObject, selectedModel: SelectedModel) : ToolListener {
+
+        private val terrainComponent = gameObject.findComponentByType<TerrainComponent>(Component.Type.TERRAIN)
+        private var tmpVector3 = Vector3()
+
+        init {
+            PropertyManager.selectedModelInstance = ModelInstance(selectedModel.modelAsset.model)
+        }
+
         override fun touchDown(screenX: Int, screenY: Int, buttonId: Int) {
             Gdx.app.log(PluginConstants.LOG_TAG, "touchDown: $screenX x $screenY - $buttonId")
         }
 
         override fun mouseMoved(screenX: Int, screenY: Int) {
-            Gdx.app.log(PluginConstants.LOG_TAG, "mouseMoved $screenX x $screenY")
+            val ray = PropertyManager.viewportManager.getPickRay(screenX.toFloat(), screenY.toFloat())
+            tmpVector3 = terrainComponent.getRayIntersection(tmpVector3, ray)
+
+            PropertyManager.selectedModelInstance?.transform?.setToTranslation(tmpVector3)
         }
 
         override fun onDisabled() {
-            Gdx.app.log(PluginConstants.LOG_TAG, "onDisabled")
+            PropertyManager.selectedModelInstance = null
         }
 
     }

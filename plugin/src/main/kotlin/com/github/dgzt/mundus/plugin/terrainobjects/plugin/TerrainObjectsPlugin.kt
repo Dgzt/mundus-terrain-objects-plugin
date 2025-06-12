@@ -1,6 +1,9 @@
 package com.github.dgzt.mundus.plugin.terrainobjects.plugin
 
+import com.badlogic.gdx.graphics.g3d.Renderable
+import com.badlogic.gdx.graphics.g3d.RenderableProvider
 import com.badlogic.gdx.utils.Array
+import com.badlogic.gdx.utils.Pool
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.creator.ComponentCreator
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.creator.ComponentWidgetCreator
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.component.TerrainObjectsComponent
@@ -12,6 +15,7 @@ import com.mbrlabs.mundus.commons.scene3d.components.Component
 import com.mbrlabs.mundus.pluginapi.ComponentExtension
 import com.mbrlabs.mundus.pluginapi.ManagerHolderExtension
 import com.mbrlabs.mundus.pluginapi.MenuExtension
+import com.mbrlabs.mundus.pluginapi.RenderExtension
 import com.mbrlabs.mundus.pluginapi.manager.ManagerHolder
 import com.mbrlabs.mundus.pluginapi.ui.RootWidget
 import org.pf4j.Extension
@@ -59,8 +63,19 @@ class TerrainObjectsPlugin : Plugin() {
         override fun managerHolder(managerHolder: ManagerHolder) {
             PropertyManager.assetManager = managerHolder.assetManager
             PropertyManager.toolManager = managerHolder.toolManager
+            PropertyManager.viewportManager = managerHolder.viewportManager
         }
+    }
 
+    @Extension
+    class TerrainObjectsRenderExtension : RenderExtension {
+        override fun getRenderableProvider(): RenderableProvider {
+            return object : RenderableProvider {
+                override fun getRenderables(renderables: Array<Renderable>, pool: Pool<Renderable>) {
+                        PropertyManager.selectedModelInstance?.getRenderables(renderables, pool)
+                }
+            }
+        }
     }
 
 }
