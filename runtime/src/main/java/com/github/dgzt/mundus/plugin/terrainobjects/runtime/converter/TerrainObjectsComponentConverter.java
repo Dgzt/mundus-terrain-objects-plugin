@@ -38,8 +38,8 @@ public class TerrainObjectsComponentConverter implements CustomComponentConverte
             assetIds.add(terrainObjectsComponent.getCustomAsset().getID());
         }
 
-        for (int i = 0; i < terrainObjectsComponent.getModelAssets().size; ++i) {
-            assetIds.add(terrainObjectsComponent.getModelAssets().get(i).getID());
+        for (int i = 0; i < terrainObjectsComponent.countModels(); ++i) {
+            assetIds.add(terrainObjectsComponent.getModel(i).getID());
         }
 
         return assetIds;
@@ -54,7 +54,7 @@ public class TerrainObjectsComponentConverter implements CustomComponentConverte
             if (asset instanceof CustomAsset) {
                 component.setCustomAsset((CustomAsset) asset);
             } else if (asset instanceof ModelAsset) {
-                component.getModelAssets().add((ModelAsset) asset);
+                component.addModel((ModelAsset) asset);
             }
         }
 

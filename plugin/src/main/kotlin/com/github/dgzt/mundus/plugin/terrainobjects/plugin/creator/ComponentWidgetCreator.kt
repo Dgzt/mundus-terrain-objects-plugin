@@ -9,6 +9,7 @@ import com.github.dgzt.mundus.plugin.terrainobjects.plugin.PropertyManager
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.model.SelectedModel
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.component.TerrainObjectsComponent
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.constant.PluginConstants
+import com.github.dgzt.mundus.plugin.terrainobjects.runtime.model.TerrainObject
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.transformer.TerrainObjectsTransformer
 import com.mbrlabs.mundus.commons.scene3d.GameObject
 import com.mbrlabs.mundus.commons.scene3d.components.Component
@@ -45,7 +46,7 @@ object ComponentWidgetCreator {
                     tmpFile.delete()
                 }
 
-                component.modelAssets.add(it)
+                component.addModel(it)
                 PropertyManager.assetManager.markAsModifiedAsset(component.customAsset) {
                     Gdx.app.debug(PluginConstants.LOG_TAG, "Save terrain objects asset for terrain: ${component.gameObject.name}")
                     saveComponent(component, component.customAsset.file)
@@ -57,8 +58,8 @@ object ComponentWidgetCreator {
     }
 
     private fun setupTextureGridWidget(component: TerrainObjectsComponent, textureGrid: TextureGrid) {
-        for (i in 0 until component.modelAssets.size) {
-            val model = component.modelAssets.get(i) as EditorModelAsset
+        for (i in 0 until component.countModels()) {
+            val model = component.getModel(i) as EditorModelAsset
             textureGrid.addTexture(model)
         }
     }
@@ -68,7 +69,7 @@ object ComponentWidgetCreator {
         file.writeString(assetJson, false)
     }
 
-    private fun setupObjectsButtonPanel(gameObject: GameObject, objectButtonPanel: RootWidget, selectedModel: SelectedModel) {
+    private fun setupObjectsButtonPanel(terrainObjectsComponent: TerrainObjectsComponent, gameObject: GameObject, objectButtonPanel: RootWidget, selectedModel: SelectedModel) {
         val buttonsPanel = objectButtonPanel.addEmptyWidget().rootWidget
         objectButtonPanel.addRow()
         val optionsPanel = objectButtonPanel.addEmptyWidget().rootWidget
@@ -77,7 +78,7 @@ object ComponentWidgetCreator {
             optionsPanel.clearWidgets()
             setupAddOptionPanel(selectedModel, optionsPanel)
 
-            PropertyManager.toolManager.activateCustomTool(ToolListenerImpl(gameObject, selectedModel))
+            PropertyManager.toolManager.activateCustomTool(ToolListenerImpl(gameObject, terrainObjectsComponent, selectedModel))
         }.setPad(0f, 20f, 0f, 0f)
 
         buttonsPanel.addTextButton("Remove") {
@@ -152,10 +153,10 @@ object ComponentWidgetCreator {
         override fun onSelect(pos: Int) {
             Gdx.app.log(PluginConstants.LOG_TAG, "Select: $pos")
             selectedModel.pos = pos
-            selectedModel.modelAsset = component.modelAssets.get(pos)
+            selectedModel.modelAsset = component.getModel(pos)
 
             objectButtonPanel.clearWidgets()
-            setupObjectsButtonPanel(component.gameObject, objectButtonPanel, selectedModel)
+            setupObjectsButtonPanel(component, component.gameObject, objectButtonPanel, selectedModel)
         }
 
         override fun onChange(pos: Int) {
@@ -167,7 +168,7 @@ object ComponentWidgetCreator {
         }
     }
 
-    private class ToolListenerImpl(gameObject: GameObject, val selectedModel: SelectedModel) : ToolListener {
+    private class ToolListenerImpl(gameObject: GameObject, val terrainObjectsComponent: TerrainObjectsComponent, val selectedModel: SelectedModel) : ToolListener {
 
         private val terrainComponent = gameObject.findComponentByType<TerrainComponent>(Component.Type.TERRAIN)
         private var tmpVector3 = Vector3()
@@ -177,7 +178,14 @@ object ComponentWidgetCreator {
         }
 
         override fun touchDown(screenX: Int, screenY: Int, buttonId: Int) {
-            Gdx.app.log(PluginConstants.LOG_TAG, "touchDown: $screenX x $screenY - $buttonId")
+            val terrainObject = TerrainObject(
+                selectedModel.pos,
+                selectedModel.posX, selectedModel.posY, selectedModel.posZ,
+                selectedModel.rotationX, selectedModel.rotationY, selectedModel.rotationZ,
+                selectedModel.scaleX, selectedModel.scaleY, selectedModel.scaleZ
+            )
+
+            terrainObjectsComponent.addTerrainObject(terrainObject)
         }
 
         override fun mouseMoved(screenX: Int, screenY: Int) {

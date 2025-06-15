@@ -9,8 +9,8 @@ public class TerrainObjectsTransformer {
     public static TerrainObjectsDTO convertToDTO(final TerrainObjectsComponent component) {
         final Array<String> modelAssetIds = new Array<>();
 
-        for (int i = 0; i < component.getModelAssets().size; ++i) {
-            modelAssetIds.add(component.getModelAssets().get(i).getID());
+        for (int i = 0; i < component.countModels(); ++i) {
+            modelAssetIds.add(component.getModel(i).getID());
         }
 
         final TerrainObjectsDTO dto = new TerrainObjectsDTO();
