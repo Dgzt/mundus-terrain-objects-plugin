@@ -61,7 +61,11 @@ public class TerrainObjectsComponent extends AbstractComponent implements Render
         terrainObject.setId(gameObject.id + "_" + nextTerrainObjectId++);
         terrainObjects.add(terrainObject);
 
-        renderer.update(modelAssets, terrainObjects);
+        updateTerrainObjects();
+    }
+
+    public void updateTerrainObjects() {
+        renderer.update(modelAssets, terrainObjects, gameObject.getTransform());
     }
 
     public CustomAsset getCustomAsset() {

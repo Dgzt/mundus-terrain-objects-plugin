@@ -6,6 +6,7 @@ import com.badlogic.gdx.utils.Array
 import com.badlogic.gdx.utils.Pool
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.creator.ComponentCreator
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.creator.ComponentWidgetCreator
+import com.github.dgzt.mundus.plugin.terrainobjects.plugin.listener.GameObjectModifiedListenerImpl
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.component.TerrainObjectsComponent
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.constant.PluginConstants
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.converter.TerrainObjectsComponentConverter
@@ -64,6 +65,8 @@ class TerrainObjectsPlugin : Plugin() {
             PropertyManager.assetManager = managerHolder.assetManager
             PropertyManager.toolManager = managerHolder.toolManager
             PropertyManager.viewportManager = managerHolder.viewportManager
+
+            managerHolder.eventManager.registerEventListener(GameObjectModifiedListenerImpl())
         }
     }
 

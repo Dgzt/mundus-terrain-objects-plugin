@@ -3,6 +3,7 @@ package com.github.dgzt.mundus.plugin.terrainobjects.plugin.creator
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.files.FileHandle
 import com.badlogic.gdx.graphics.g3d.ModelInstance
+import com.badlogic.gdx.math.Matrix4
 import com.badlogic.gdx.math.Quaternion
 import com.badlogic.gdx.math.Vector3
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.PropertyManager
@@ -172,6 +173,7 @@ object ComponentWidgetCreator {
 
         private val terrainComponent = gameObject.findComponentByType<TerrainComponent>(Component.Type.TERRAIN)
         private var tmpVector3 = Vector3()
+        private var tmpMatrix4 = Matrix4()
 
         init {
             PropertyManager.selectedModelInstance = ModelInstance(selectedModel.modelAsset.model)
@@ -191,6 +193,9 @@ object ComponentWidgetCreator {
         override fun mouseMoved(screenX: Int, screenY: Int) {
             val ray = PropertyManager.viewportManager.getPickRay(screenX.toFloat(), screenY.toFloat())
             tmpVector3 = terrainComponent.getRayIntersection(tmpVector3, ray)
+
+            // convert to local coordinate
+            tmpVector3.mul(tmpMatrix4.set(terrainComponent.modelInstance.transform).inv())
 
             selectedModel.posX = tmpVector3.x
             selectedModel.posY = tmpVector3.y

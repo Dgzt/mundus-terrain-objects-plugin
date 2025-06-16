@@ -4,6 +4,7 @@ import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelCache;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.Renderable;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
@@ -23,9 +24,9 @@ public class TerrainObjectsRendererModelCacheImpl implements TerrainObjectsRende
     }
 
     @Override
-    public void update(final Array<ModelAsset> modelAssets, final Array<TerrainObject> terrainObjects) {
+    public void update(final Array<ModelAsset> modelAssets, final Array<TerrainObject> terrainObjects, final Matrix4 parentTransform) {
         addModelInstances(modelAssets, terrainObjects);
-        updatePositions(terrainObjects);
+        updatePositions(terrainObjects, parentTransform);
 
         modelCache.begin();
         modelCache.add(modelInstances);
@@ -54,13 +55,13 @@ public class TerrainObjectsRendererModelCacheImpl implements TerrainObjectsRende
         }
     }
 
-    private void updatePositions(final Array<TerrainObject> terrainObjects/*, final Matrix4 parentTransform*/) {
+    private void updatePositions(final Array<TerrainObject> terrainObjects, final Matrix4 parentTransform) {
         for (int i = 0; i < terrainObjects.size; ++i) {
             final TerrainObject terrainObject = terrainObjects.get(i);
             final ModelInstance modelInstance = findById(terrainObject.getId());
 
             modelInstance.transform.idt();
-            setupPositionScaleAndRotation(modelInstance, terrainObject/*, parentTransform*/);
+            setupPositionScaleAndRotation(modelInstance, terrainObject, parentTransform);
         }
     }
 
@@ -74,7 +75,7 @@ public class TerrainObjectsRendererModelCacheImpl implements TerrainObjectsRende
         return false;
     }
 
-    private void setupPositionScaleAndRotation(final ModelInstance modelInstance, final TerrainObject terrainObject/*, final Matrix4 parentTransform*/) {
+    private void setupPositionScaleAndRotation(final ModelInstance modelInstance, final TerrainObject terrainObject, final Matrix4 parentTransform) {
         final Vector3 localPosition = terrainObject.getPosition();
         final Vector3 rotate = terrainObject.getRotation();
         final Vector3 scale = terrainObject.getScale();
@@ -93,7 +94,8 @@ public class TerrainObjectsRendererModelCacheImpl implements TerrainObjectsRende
             modelInstance.transform.scale(scale.x, scale.y, scale.z);
         }
 
-        // modelInstance.transform.mulLeft(parentTransform);
+        // Applies parent's transforms
+        modelInstance.transform.mulLeft(parentTransform);
     }
 
     private ModelInstance findById(final String id) {
