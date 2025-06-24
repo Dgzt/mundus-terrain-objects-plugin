@@ -2,11 +2,10 @@ package com.github.dgzt.mundus.plugin.terrainobjects.runtime.renderer;
 
 import com.badlogic.gdx.graphics.g3d.RenderableProvider;
 import com.badlogic.gdx.math.Matrix4;
-import com.badlogic.gdx.utils.Array;
-import com.github.dgzt.mundus.plugin.terrainobjects.runtime.model.TerrainObject;
-import com.mbrlabs.mundus.commons.assets.ModelAsset;
+import com.github.dgzt.mundus.plugin.terrainobjects.runtime.asset.TerrainObjectsAsset;
+import com.github.dgzt.mundus.plugin.terrainobjects.runtime.asset.TerrainObjectsLayerAsset;
 
 public interface TerrainObjectsRenderer extends RenderableProvider {
 
-    void update(Array<ModelAsset> modelAssets, Array<TerrainObject> terrainObjects, Matrix4 parentTransform);
+    void update(TerrainObjectsLayerAsset terrainObjectsLayerAsset, TerrainObjectsAsset terrainObjectsAsset, Matrix4 parentTransform);
 }

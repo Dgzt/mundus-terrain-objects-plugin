@@ -1,17 +1,17 @@
 package com.github.dgzt.mundus.plugin.terrainobjects.plugin.creator
 
 import com.badlogic.gdx.Gdx
-import com.badlogic.gdx.files.FileHandle
 import com.badlogic.gdx.graphics.g3d.ModelInstance
 import com.badlogic.gdx.math.Matrix4
 import com.badlogic.gdx.math.Quaternion
 import com.badlogic.gdx.math.Vector3
+import com.badlogic.gdx.utils.Array
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.PropertyManager
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.model.SelectedModel
+import com.github.dgzt.mundus.plugin.terrainobjects.runtime.asset.TerrainObjectsLayerAsset
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.component.TerrainObjectsComponent
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.constant.PluginConstants
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.model.TerrainObject
-import com.github.dgzt.mundus.plugin.terrainobjects.runtime.transformer.TerrainObjectsTransformer
 import com.mbrlabs.mundus.commons.scene3d.GameObject
 import com.mbrlabs.mundus.commons.scene3d.components.Component
 import com.mbrlabs.mundus.commons.scene3d.components.TerrainComponent
@@ -26,6 +26,19 @@ object ComponentWidgetCreator {
 
     fun setup(component: TerrainObjectsComponent, rootWidget: RootWidget) {
         val selectedModel = SelectedModel()
+        val terrainObjectsLayerAsset = component.terrainObjectsLayerAsset
+
+        // Object layer widget
+        rootWidget.addLabel("Object layer:").setAlign(WidgetAlign.LEFT)
+        rootWidget.addRow()
+        val objectLayerWidgetCell = rootWidget.addEmptyWidget()
+        objectLayerWidgetCell.grow()
+        objectLayerWidgetCell.setPad(0f, 0f, 0f, 5f)
+        objectLayerWidgetCell.rootWidget.addLabel(terrainObjectsLayerAsset.terrainObjectsLasetCustomAsset.name).setAlign(WidgetAlign.LEFT).grow()
+        objectLayerWidgetCell.rootWidget.addTextButton("Change") {
+            // TODO
+        }.setAlign(WidgetAlign.RIGHT)
+        rootWidget.addRow()
 
         rootWidget.addLabel("Objects:").setAlign(WidgetAlign.LEFT)
         rootWidget.addRow()
@@ -35,22 +48,16 @@ object ComponentWidgetCreator {
         textureGrid = rootWidget.addTextureGrid(true, true, textureGridListener).widget
         setupTextureGridWidget(component, textureGrid)
         rootWidget.addRow()
+
+        // Object grid
         rootWidget.addTextButton("Add Object") {
             rootWidget.showModelAssetSelectionDialog {
                 textureGrid.addTexture(it)
 
-                if (component.customAsset == null) {
-                    val tmpDir = System.getProperty("java.io.tmpdir")
-                    val tmpFile = FileHandle("$tmpDir/${component.gameObject.name}.terrainobjects")
-                    saveComponent(component, tmpFile)
-                    component.customAsset = PropertyManager.assetManager.createNewAsset(tmpFile)
-                    tmpFile.delete()
-                }
-
-                component.addModel(it)
-                PropertyManager.assetManager.markAsModifiedAsset(component.customAsset) {
+                component.terrainObjectsLayerAsset.modelAssets.add(it)
+                PropertyManager.assetManager.markAsModifiedAsset(component.terrainObjectsLayerAsset.terrainObjectsLasetCustomAsset) {
                     Gdx.app.debug(PluginConstants.LOG_TAG, "Save terrain objects asset for terrain: ${component.gameObject.name}")
-                    saveComponent(component, component.customAsset.file)
+                    saveTerrainObjectsLayerAsset(component.terrainObjectsLayerAsset)
                 }
             }
         }.setAlign(WidgetAlign.RIGHT)
@@ -59,15 +66,21 @@ object ComponentWidgetCreator {
     }
 
     private fun setupTextureGridWidget(component: TerrainObjectsComponent, textureGrid: TextureGrid) {
-        for (i in 0 until component.countModels()) {
-            val model = component.getModel(i) as EditorModelAsset
+        for (i in 0 until component.terrainObjectsLayerAsset.modelAssets.size) {
+            val model = component.terrainObjectsLayerAsset.modelAssets.get(i) as EditorModelAsset
             textureGrid.addTexture(model)
         }
     }
 
-    private fun saveComponent(component: TerrainObjectsComponent, file: FileHandle) {
-        val assetJson = PropertyManager.json.toJson(TerrainObjectsTransformer.convertToDTO(component))
-        file.writeString(assetJson, false)
+    private fun saveTerrainObjectsLayerAsset(terrainObjectsLayerAsset: TerrainObjectsLayerAsset) {
+        val modelAssetIds = Array<String>()
+        for (modelAsset in terrainObjectsLayerAsset.modelAssets) {
+            modelAssetIds.add(modelAsset.id)
+        }
+
+        val json = PropertyManager.json.toJson(modelAssetIds)
+
+        terrainObjectsLayerAsset.terrainObjectsLasetCustomAsset.file.writeString(json, false)
     }
 
     private fun setupObjectsButtonPanel(terrainObjectsComponent: TerrainObjectsComponent, gameObject: GameObject, objectButtonPanel: RootWidget, selectedModel: SelectedModel) {
@@ -154,7 +167,7 @@ object ComponentWidgetCreator {
         override fun onSelect(pos: Int) {
             Gdx.app.log(PluginConstants.LOG_TAG, "Select: $pos")
             selectedModel.pos = pos
-            selectedModel.modelAsset = component.getModel(pos)
+            selectedModel.modelAsset = component.terrainObjectsLayerAsset.modelAssets.get(pos)
 
             objectButtonPanel.clearWidgets()
             setupObjectsButtonPanel(component, component.gameObject, objectButtonPanel, selectedModel)

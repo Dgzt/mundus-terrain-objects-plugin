@@ -9,6 +9,8 @@ import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Pool;
+import com.github.dgzt.mundus.plugin.terrainobjects.runtime.asset.TerrainObjectsAsset;
+import com.github.dgzt.mundus.plugin.terrainobjects.runtime.asset.TerrainObjectsLayerAsset;
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.model.TerrainObject;
 import com.mbrlabs.mundus.commons.assets.ModelAsset;
 import com.mbrlabs.mundus.commons.utils.Pools;
@@ -24,9 +26,9 @@ public class TerrainObjectsRendererModelCacheImpl implements TerrainObjectsRende
     }
 
     @Override
-    public void update(final Array<ModelAsset> modelAssets, final Array<TerrainObject> terrainObjects, final Matrix4 parentTransform) {
-        addModelInstances(modelAssets, terrainObjects);
-        updatePositions(terrainObjects, parentTransform);
+    public void update(final TerrainObjectsLayerAsset terrainObjectsLayerAsset, final TerrainObjectsAsset terrainObjectsAsset, final Matrix4 parentTransform) {
+        addModelInstances(terrainObjectsLayerAsset, terrainObjectsAsset);
+        updatePositions(terrainObjectsAsset, parentTransform);
 
         modelCache.begin();
         modelCache.add(modelInstances);
@@ -38,7 +40,10 @@ public class TerrainObjectsRendererModelCacheImpl implements TerrainObjectsRende
         modelCache.getRenderables(renderables, pool);
     }
 
-    private void addModelInstances(final Array<ModelAsset> modelAssets, final Array<TerrainObject> terrainObjects) {
+    private void addModelInstances(final TerrainObjectsLayerAsset terrainObjectsLayerAsset, final TerrainObjectsAsset terrainObjectsAsset) {
+        final Array<TerrainObject> terrainObjects = terrainObjectsAsset.getTerrainObjects();
+        final Array<ModelAsset> modelAssets = terrainObjectsLayerAsset.getModelAssets();
+
         for (int i = 0; i < terrainObjects.size; ++i) {
             final TerrainObject terrainObject = terrainObjects.get(i);
             final String terrainObjectId = terrainObject.getId();
@@ -55,7 +60,9 @@ public class TerrainObjectsRendererModelCacheImpl implements TerrainObjectsRende
         }
     }
 
-    private void updatePositions(final Array<TerrainObject> terrainObjects, final Matrix4 parentTransform) {
+    private void updatePositions(final TerrainObjectsAsset terrainObjectsAsset, final Matrix4 parentTransform) {
+        final Array<TerrainObject> terrainObjects = terrainObjectsAsset.getTerrainObjects();
+
         for (int i = 0; i < terrainObjects.size; ++i) {
             final TerrainObject terrainObject = terrainObjects.get(i);
             final ModelInstance modelInstance = findById(terrainObject.getId());
