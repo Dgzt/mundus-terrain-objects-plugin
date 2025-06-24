@@ -6,7 +6,9 @@ import com.github.dgzt.mundus.plugin.terrainobjects.plugin.PropertyManager
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.utils.GameObjectUtils
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.asset.TerrainObjectsAsset
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.asset.TerrainObjectsLayerAsset
+import com.github.dgzt.mundus.plugin.terrainobjects.runtime.component.AbstractTerrainObjectsComponent
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.component.TerrainObjectsComponent
+import com.github.dgzt.mundus.plugin.terrainobjects.runtime.component.TerrainObjectsManagerComponent
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.constant.PluginConstants
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.manager.TerrainObjectsLayerManager
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.model.TerrainObject
@@ -15,14 +17,14 @@ import com.mbrlabs.mundus.commons.scene3d.GameObject
 
 object ComponentCreator {
 
-    fun create(gameObject: GameObject): TerrainObjectsComponent {
-        val component: TerrainObjectsComponent
+    fun create(gameObject: GameObject): AbstractTerrainObjectsComponent {
+        val component: AbstractTerrainObjectsComponent
 
         val terrainObjectsLayerAsset = TerrainObjectsLayerAsset(createTerrainObjectsLayerAsset(gameObject))
         TerrainObjectsLayerManager.register(terrainObjectsLayerAsset)
 
         if (GameObjectUtils.isTerrainManagerGameObject(gameObject)) {
-            component = TerrainObjectsComponent(gameObject)
+            component = TerrainObjectsManagerComponent(gameObject)
             component.terrainObjectsLayerAsset = terrainObjectsLayerAsset
 
             for (childGameObject in gameObject.children) {

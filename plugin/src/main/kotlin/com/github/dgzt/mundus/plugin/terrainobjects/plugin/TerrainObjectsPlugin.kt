@@ -7,7 +7,7 @@ import com.badlogic.gdx.utils.Pool
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.creator.ComponentCreator
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.creator.ComponentWidgetCreator
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.listener.GameObjectModifiedListenerImpl
-import com.github.dgzt.mundus.plugin.terrainobjects.runtime.component.TerrainObjectsComponent
+import com.github.dgzt.mundus.plugin.terrainobjects.runtime.component.AbstractTerrainObjectsComponent
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.constant.PluginConstants
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.converter.TerrainObjectsComponentConverter
 import com.mbrlabs.mundus.commons.mapper.CustomComponentConverter
@@ -54,7 +54,7 @@ class TerrainObjectsPlugin : Plugin() {
         override fun createComponent(gameObject: GameObject): Component = ComponentCreator.create(gameObject)
 
         override fun setupComponentInspectorWidget(component: Component, rootWidget: RootWidget) =
-            ComponentWidgetCreator.setup(component as TerrainObjectsComponent, rootWidget)
+            ComponentWidgetCreator.setup(component as AbstractTerrainObjectsComponent, rootWidget)
 
         override fun getConverter(): CustomComponentConverter = TerrainObjectsComponentConverter()
 

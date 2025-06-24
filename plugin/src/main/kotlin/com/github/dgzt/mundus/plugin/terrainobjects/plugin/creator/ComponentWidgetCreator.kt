@@ -9,7 +9,9 @@ import com.badlogic.gdx.utils.Array
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.PropertyManager
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.model.SelectedModel
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.asset.TerrainObjectsLayerAsset
+import com.github.dgzt.mundus.plugin.terrainobjects.runtime.component.AbstractTerrainObjectsComponent
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.component.TerrainObjectsComponent
+import com.github.dgzt.mundus.plugin.terrainobjects.runtime.component.TerrainObjectsManagerComponent
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.constant.PluginConstants
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.model.TerrainObject
 import com.mbrlabs.mundus.commons.scene3d.GameObject
@@ -24,11 +26,35 @@ import com.mbrlabs.mundus.pluginapi.ui.WidgetAlign
 
 object ComponentWidgetCreator {
 
-    fun setup(component: TerrainObjectsComponent, rootWidget: RootWidget) {
-        val selectedModel = SelectedModel()
-        val terrainObjectsLayerAsset = component.terrainObjectsLayerAsset
+    fun setup(component: AbstractTerrainObjectsComponent, rootWidget: RootWidget) {
+        if (component is TerrainObjectsManagerComponent) {
+            setupTerrainObjectsManagerWidget(component, rootWidget)
+        } else if (component is TerrainObjectsComponent) {
+            setupTerrainObjectsWidget(component, rootWidget)
+        } else {
+            throw UnsupportedOperationException("Unsupported component!")
+        }
+    }
 
-        // Object layer widget
+    private fun setupTerrainObjectsManagerWidget(component: TerrainObjectsManagerComponent, rootWidget: RootWidget) {
+        setupTerrainObjectsLayerWidget(component.terrainObjectsLayerAsset, TerrainManagerTextureGridListenerImpl(), rootWidget)
+    }
+
+    private fun setupTerrainObjectsWidget(component: TerrainObjectsComponent, rootWidget: RootWidget) {
+        val selectedModel = SelectedModel()
+
+        val textureGridListener = TextureGridListenerImpl(component, selectedModel)
+
+        setupTerrainObjectsLayerWidget(component.terrainObjectsLayerAsset, textureGridListener, rootWidget)
+        rootWidget.addRow()
+
+        // Object grid
+
+        rootWidget.addRow()
+        textureGridListener.objectButtonPanel = rootWidget.addEmptyWidget().rootWidget
+    }
+
+    private fun setupTerrainObjectsLayerWidget(terrainObjectsLayerAsset: TerrainObjectsLayerAsset, textureGridListener: TextureGridListener, rootWidget: RootWidget) {
         rootWidget.addLabel("Object layer:").setAlign(WidgetAlign.LEFT)
         rootWidget.addRow()
         val objectLayerWidgetCell = rootWidget.addEmptyWidget()
@@ -44,33 +70,33 @@ object ComponentWidgetCreator {
         rootWidget.addRow()
         var textureGrid: TextureGrid
 
-        val textureGridListener = TextureGridListenerImpl(component, selectedModel)
-        textureGrid = rootWidget.addTextureGrid(true, true, textureGridListener).widget
-        setupTextureGridWidget(component, textureGrid)
-        rootWidget.addRow()
 
-        // Object grid
+        textureGrid = rootWidget.addTextureGrid(true, true, textureGridListener).widget
+
+        for (i in 0 until terrainObjectsLayerAsset.modelAssets.size) {
+            val model = terrainObjectsLayerAsset.modelAssets.get(i) as EditorModelAsset
+            textureGrid.addTexture(model)
+        }
+
         rootWidget.addTextButton("Add Object") {
             rootWidget.showModelAssetSelectionDialog {
                 textureGrid.addTexture(it)
 
-                component.terrainObjectsLayerAsset.modelAssets.add(it)
-                PropertyManager.assetManager.markAsModifiedAsset(component.terrainObjectsLayerAsset.terrainObjectsLasetCustomAsset) {
-                    Gdx.app.debug(PluginConstants.LOG_TAG, "Save terrain objects asset for terrain: ${component.gameObject.name}")
-                    saveTerrainObjectsLayerAsset(component.terrainObjectsLayerAsset)
+                terrainObjectsLayerAsset.modelAssets.add(it)
+                PropertyManager.assetManager.markAsModifiedAsset(terrainObjectsLayerAsset.terrainObjectsLasetCustomAsset) {
+                    Gdx.app.debug(PluginConstants.LOG_TAG, "Save terrain objects layer asset: ${terrainObjectsLayerAsset.terrainObjectsLasetCustomAsset.name}")
+                    saveTerrainObjectsLayerAsset(terrainObjectsLayerAsset)
                 }
             }
         }.setAlign(WidgetAlign.RIGHT)
-        rootWidget.addRow()
-        textureGridListener.objectButtonPanel = rootWidget.addEmptyWidget().rootWidget
     }
 
-    private fun setupTextureGridWidget(component: TerrainObjectsComponent, textureGrid: TextureGrid) {
-        for (i in 0 until component.terrainObjectsLayerAsset.modelAssets.size) {
-            val model = component.terrainObjectsLayerAsset.modelAssets.get(i) as EditorModelAsset
-            textureGrid.addTexture(model)
-        }
-    }
+//    private fun setupTextureGridWidget(component: TerrainObjectsComponent, textureGrid: TextureGrid) {
+//        for (i in 0 until component.terrainObjectsLayerAsset.modelAssets.size) {
+//            val model = component.terrainObjectsLayerAsset.modelAssets.get(i) as EditorModelAsset
+//            textureGrid.addTexture(model)
+//        }
+//    }
 
     private fun saveTerrainObjectsLayerAsset(terrainObjectsLayerAsset: TerrainObjectsLayerAsset) {
         val modelAssetIds = Array<String>()
@@ -156,6 +182,24 @@ object ComponentWidgetCreator {
 
         // Scaling
         PropertyManager.selectedModelInstance?.transform?.scale(selectedModel.scaleX, selectedModel.scaleY, selectedModel.scaleZ)
+    }
+
+    private class TerrainManagerTextureGridListenerImpl : TextureGridListener {
+        private var selectedPos = -1
+
+        override fun onSelect(pos: Int) {
+            Gdx.app.log(PluginConstants.LOG_TAG, "Select: $pos")
+            selectedPos = pos
+        }
+
+        override fun onChange(pos: Int) {
+            Gdx.app.log(PluginConstants.LOG_TAG, "Change: $pos")
+        }
+
+        override fun onRemove(pos: Int) {
+            Gdx.app.log(PluginConstants.LOG_TAG, "Remove: $pos")
+        }
+
     }
 
     private class TextureGridListenerImpl(
