@@ -60,7 +60,7 @@ object ComponentWidgetCreator {
         val objectLayerWidgetCell = rootWidget.addEmptyWidget()
         objectLayerWidgetCell.grow()
         objectLayerWidgetCell.setPad(0f, 0f, 0f, 5f)
-        objectLayerWidgetCell.rootWidget.addLabel(terrainObjectsLayerAsset.terrainObjectsLasetCustomAsset.name).setAlign(WidgetAlign.LEFT).grow()
+        objectLayerWidgetCell.rootWidget.addLabel(terrainObjectsLayerAsset.terrainObjectsLasetCustomAsset.name).grow().setAlign(WidgetAlign.LEFT)
         objectLayerWidgetCell.rootWidget.addTextButton("Change") {
             // TODO
         }.setAlign(WidgetAlign.RIGHT)
@@ -77,7 +77,7 @@ object ComponentWidgetCreator {
             val model = terrainObjectsLayerAsset.modelAssets.get(i) as EditorModelAsset
             textureGrid.addTexture(model)
         }
-
+        rootWidget.addRow()
         rootWidget.addTextButton("Add Object") {
             rootWidget.showModelAssetSelectionDialog {
                 textureGrid.addTexture(it)
