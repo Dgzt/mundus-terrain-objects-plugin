@@ -15,6 +15,7 @@ object AssetUtils {
 
         tmpFile.writeString(PropertyManager.json.toJson(Array<String>()), false)
 
+        // TODO exception
         val customAsset = PropertyManager.assetManager.createNewAsset(tmpFile)
         tmpFile.delete()
 
@@ -29,6 +30,7 @@ object AssetUtils {
         val tmpFile = FileHandle("$tmpDir/$name.${PluginConstants.TERRAIN_OBJECTS_EXTENSION}")
         tmpFile.writeString(PropertyManager.json.toJson(Array<TerrainObject>()), false)
 
+        // TODO exception
         val customAsset = PropertyManager.assetManager.createNewAsset(tmpFile)
         tmpFile.delete()
 
