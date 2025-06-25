@@ -8,6 +8,7 @@ import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.Array
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.PropertyManager
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.model.SelectedModel
+import com.github.dgzt.mundus.plugin.terrainobjects.plugin.utils.AssetUtils
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.asset.TerrainObjectsLayerAsset
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.component.AbstractTerrainObjectsComponent
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.component.TerrainObjectsComponent
@@ -19,6 +20,7 @@ import com.mbrlabs.mundus.commons.scene3d.components.Component
 import com.mbrlabs.mundus.commons.scene3d.components.TerrainComponent
 import com.mbrlabs.mundus.editorcommons.assets.EditorModelAsset
 import com.mbrlabs.mundus.pluginapi.listener.ToolListener
+import com.mbrlabs.mundus.pluginapi.ui.Label
 import com.mbrlabs.mundus.pluginapi.ui.RootWidget
 import com.mbrlabs.mundus.pluginapi.ui.TextureGrid
 import com.mbrlabs.mundus.pluginapi.ui.TextureGridListener
@@ -37,7 +39,7 @@ object ComponentWidgetCreator {
     }
 
     private fun setupTerrainObjectsManagerWidget(component: TerrainObjectsManagerComponent, rootWidget: RootWidget) {
-        setupTerrainObjectsLayerWidget(component.terrainObjectsLayerAsset, TerrainManagerTextureGridListenerImpl(), rootWidget)
+        setupTerrainObjectsLayerWidget(component, TerrainManagerTextureGridListenerImpl(), rootWidget)
     }
 
     private fun setupTerrainObjectsWidget(component: TerrainObjectsComponent, rootWidget: RootWidget) {
@@ -45,7 +47,7 @@ object ComponentWidgetCreator {
 
         val textureGridListener = TextureGridListenerImpl(component, selectedModel)
 
-        setupTerrainObjectsLayerWidget(component.terrainObjectsLayerAsset, textureGridListener, rootWidget)
+        setupTerrainObjectsLayerWidget(component, textureGridListener, rootWidget)
         rootWidget.addRow()
 
         // Object grid
@@ -54,13 +56,19 @@ object ComponentWidgetCreator {
         textureGridListener.objectButtonPanel = rootWidget.addEmptyWidget().rootWidget
     }
 
-    private fun setupTerrainObjectsLayerWidget(terrainObjectsLayerAsset: TerrainObjectsLayerAsset, textureGridListener: TextureGridListener, rootWidget: RootWidget) {
+    private fun setupTerrainObjectsLayerWidget(component: AbstractTerrainObjectsComponent, textureGridListener: TextureGridListener, rootWidget: RootWidget) {
+        val terrainObjectsLayerAsset = component.terrainObjectsLayerAsset
+
         rootWidget.addLabel("Object layer:").setAlign(WidgetAlign.LEFT)
         rootWidget.addRow()
         val objectLayerWidgetCell = rootWidget.addEmptyWidget()
         objectLayerWidgetCell.grow()
         objectLayerWidgetCell.setPad(0f, 0f, 0f, 5f)
-        objectLayerWidgetCell.rootWidget.addLabel(terrainObjectsLayerAsset.terrainObjectsLasetCustomAsset.name).grow().setAlign(WidgetAlign.LEFT)
+        val terrainObjectsLayerLabel = objectLayerWidgetCell.rootWidget.addLabel(terrainObjectsLayerAsset.terrainObjectsLasetCustomAsset.name)
+        terrainObjectsLayerLabel.grow().setAlign(WidgetAlign.LEFT)
+        objectLayerWidgetCell.rootWidget.addTextButton("Duplicate") {
+            duplicateTerrainObjectsLayer(component, terrainObjectsLayerAsset, rootWidget, terrainObjectsLayerLabel.label)
+        }.setPad(0f, 5f, 0f, 0f).setAlign(WidgetAlign.RIGHT)
         objectLayerWidgetCell.rootWidget.addTextButton("Change") {
             // TODO
         }.setAlign(WidgetAlign.RIGHT)
@@ -90,13 +98,6 @@ object ComponentWidgetCreator {
             }
         }.setAlign(WidgetAlign.RIGHT)
     }
-
-//    private fun setupTextureGridWidget(component: TerrainObjectsComponent, textureGrid: TextureGrid) {
-//        for (i in 0 until component.terrainObjectsLayerAsset.modelAssets.size) {
-//            val model = component.terrainObjectsLayerAsset.modelAssets.get(i) as EditorModelAsset
-//            textureGrid.addTexture(model)
-//        }
-//    }
 
     private fun saveTerrainObjectsLayerAsset(terrainObjectsLayerAsset: TerrainObjectsLayerAsset) {
         val modelAssetIds = Array<String>()
@@ -182,6 +183,28 @@ object ComponentWidgetCreator {
 
         // Scaling
         PropertyManager.selectedModelInstance?.transform?.scale(selectedModel.scaleX, selectedModel.scaleY, selectedModel.scaleZ)
+    }
+
+    private fun duplicateTerrainObjectsLayer(
+        component: AbstractTerrainObjectsComponent,
+        terrainObjectsLayerAsset: TerrainObjectsLayerAsset,
+        rootWidget: RootWidget,
+        terrainObjectsLayerLabel: Label
+    ) {
+        rootWidget.showStringInputDialog("Name:") {
+            val newCustomAsset = AssetUtils.createTerrainObjectsLayerAsset(it)
+            val newTerrainObjectLayerAsset = TerrainObjectsLayerAsset(newCustomAsset)
+            newTerrainObjectLayerAsset.modelAssets.addAll(terrainObjectsLayerAsset.modelAssets)
+
+            component.terrainObjectsLayerAsset = newTerrainObjectLayerAsset
+
+            PropertyManager.assetManager.markAsModifiedAsset(newTerrainObjectLayerAsset.terrainObjectsLasetCustomAsset) {
+                Gdx.app.debug(PluginConstants.LOG_TAG, "Save terrain objects layer asset: ${terrainObjectsLayerAsset.terrainObjectsLasetCustomAsset.name}")
+                saveTerrainObjectsLayerAsset(terrainObjectsLayerAsset)
+            }
+
+            terrainObjectsLayerLabel.setText(component.terrainObjectsLayerAsset.terrainObjectsLasetCustomAsset.name)
+        }
     }
 
     private class TerrainManagerTextureGridListenerImpl : TextureGridListener {
