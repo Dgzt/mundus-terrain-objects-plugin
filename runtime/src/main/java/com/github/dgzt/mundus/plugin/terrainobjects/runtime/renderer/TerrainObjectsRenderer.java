@@ -7,5 +7,5 @@ import com.github.dgzt.mundus.plugin.terrainobjects.runtime.asset.TerrainObjects
 
 public interface TerrainObjectsRenderer extends RenderableProvider {
 
-    void update(TerrainObjectsLayerAsset terrainObjectsLayerAsset, TerrainObjectsAsset terrainObjectsAsset, Matrix4 parentTransform);
+    void update(boolean recreateAllObjects, TerrainObjectsLayerAsset terrainObjectsLayerAsset, TerrainObjectsAsset terrainObjectsAsset, Matrix4 parentTransform);
 }

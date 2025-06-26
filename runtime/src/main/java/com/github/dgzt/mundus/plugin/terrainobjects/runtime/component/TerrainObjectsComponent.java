@@ -39,7 +39,11 @@ public class TerrainObjectsComponent extends AbstractTerrainObjectsComponent imp
     }
 
     public void updateTerrainObjects() {
-        renderer.update(getTerrainObjectsLayerAsset(), terrainObjectsAsset, gameObject.getTransform());
+        updateTerrainObjects(false);
+    }
+
+    public void updateTerrainObjects(final boolean recreateAllObjects) {
+        renderer.update(recreateAllObjects, getTerrainObjectsLayerAsset(), terrainObjectsAsset, gameObject.getTransform());
     }
 
     public TerrainObjectsAsset getTerrainObjectsAsset() {

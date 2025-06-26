@@ -9,17 +9,22 @@ import com.badlogic.gdx.utils.Array
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.PropertyManager
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.model.SelectedModel
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.utils.AssetUtils
+import com.github.dgzt.mundus.plugin.terrainobjects.plugin.utils.GameObjectUtils
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.asset.TerrainObjectsLayerAsset
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.component.AbstractTerrainObjectsComponent
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.component.TerrainObjectsComponent
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.component.TerrainObjectsManagerComponent
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.constant.PluginConstants
+import com.github.dgzt.mundus.plugin.terrainobjects.runtime.manager.TerrainObjectsLayerManager
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.model.TerrainObject
+import com.mbrlabs.mundus.commons.assets.CustomAsset
 import com.mbrlabs.mundus.commons.scene3d.GameObject
 import com.mbrlabs.mundus.commons.scene3d.components.Component
 import com.mbrlabs.mundus.commons.scene3d.components.TerrainComponent
 import com.mbrlabs.mundus.editorcommons.assets.EditorModelAsset
 import com.mbrlabs.mundus.pluginapi.listener.ToolListener
+import com.mbrlabs.mundus.pluginapi.ui.CustomAssetFilter
+import com.mbrlabs.mundus.pluginapi.ui.CustomAssetSelectionDialogListener
 import com.mbrlabs.mundus.pluginapi.ui.Label
 import com.mbrlabs.mundus.pluginapi.ui.RootWidget
 import com.mbrlabs.mundus.pluginapi.ui.TextureGrid
@@ -70,7 +75,7 @@ object ComponentWidgetCreator {
             duplicateTerrainObjectsLayer(component, terrainObjectsLayerAsset, rootWidget, terrainObjectsLayerLabel.label)
         }.setPad(0f, 5f, 0f, 0f).setAlign(WidgetAlign.RIGHT)
         objectLayerWidgetCell.rootWidget.addTextButton("Change") {
-            // TODO
+            rootWidget.showCustomAssetSelectionDialog(CustomAssetFilterImpl(), CustomAssetSelectionDialogListenerImpl(component.gameObject, terrainObjectsLayerLabel.label))
         }.setAlign(WidgetAlign.RIGHT)
         rootWidget.addRow()
 
@@ -204,6 +209,38 @@ object ComponentWidgetCreator {
             }
 
             terrainObjectsLayerLabel.setText(component.terrainObjectsLayerAsset.terrainObjectsLasetCustomAsset.name)
+        }
+    }
+
+    private class CustomAssetFilterImpl : CustomAssetFilter {
+        override fun isVisible(customAsset: CustomAsset): Boolean {
+            val properties = customAsset.properties
+            return properties.containsKey(PluginConstants.CUSTOM_ASSET_TYPE_KEY)
+                    && PluginConstants.CUSTOM_ASSET_TYPE_TERRAIN_OBJECTS_LAYER == properties.get(PluginConstants.CUSTOM_ASSET_TYPE_KEY)
+        }
+    }
+
+    private class CustomAssetSelectionDialogListenerImpl(val gameObject: GameObject, val terrainObjectsLayerLabel: Label) : CustomAssetSelectionDialogListener {
+        override fun onSelected(customAsset: CustomAsset) {
+            // TODO handle different objects num
+
+            val terrainObjectsLayerAsset = TerrainObjectsLayerManager.getByKey(customAsset.id)
+
+            if (GameObjectUtils.isTerrainManagerGameObject(gameObject)) {
+                val components = gameObject.findComponentsByType(Array<AbstractTerrainObjectsComponent>(), PluginConstants.TYPE, true)
+                for (component in components) {
+                    component.terrainObjectsLayerAsset = terrainObjectsLayerAsset
+                    if (component is TerrainObjectsComponent) {
+                        component.updateTerrainObjects(true)
+                    }
+                }
+            } else {
+                val component = gameObject.findComponentByType<TerrainObjectsComponent>(PluginConstants.TYPE)
+                component.terrainObjectsLayerAsset = terrainObjectsLayerAsset
+                component.updateTerrainObjects(true)
+            }
+
+            terrainObjectsLayerLabel.setText(terrainObjectsLayerAsset.terrainObjectsLasetCustomAsset.name)
         }
     }
 

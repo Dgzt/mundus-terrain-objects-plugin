@@ -26,7 +26,8 @@ public class TerrainObjectsRendererModelCacheImpl implements TerrainObjectsRende
     }
 
     @Override
-    public void update(final TerrainObjectsLayerAsset terrainObjectsLayerAsset, final TerrainObjectsAsset terrainObjectsAsset, final Matrix4 parentTransform) {
+    public void update(final boolean recreateAllObjects, final TerrainObjectsLayerAsset terrainObjectsLayerAsset, final TerrainObjectsAsset terrainObjectsAsset, final Matrix4 parentTransform) {
+        removeModelInstances(recreateAllObjects, terrainObjectsAsset);
         addModelInstances(terrainObjectsLayerAsset, terrainObjectsAsset);
         updatePositions(terrainObjectsAsset, parentTransform);
 
@@ -38,6 +39,17 @@ public class TerrainObjectsRendererModelCacheImpl implements TerrainObjectsRende
     @Override
     public void getRenderables(final Array<Renderable> renderables, final Pool<Renderable> pool) {
         modelCache.getRenderables(renderables, pool);
+    }
+
+    private void removeModelInstances(final boolean recreateAllObjects, final TerrainObjectsAsset terrainObjectsAsset) {
+        for (int i = modelInstances.size - 1; i >= 0; --i) {
+            final ModelInstance modelInstance = modelInstances.get(i);
+            final String id = (String) modelInstance.userData;
+
+            if (recreateAllObjects || !containsTerrainObject(id, terrainObjectsAsset)) {
+                modelInstances.removeIndex(i);
+            }
+        }
     }
 
     private void addModelInstances(final TerrainObjectsLayerAsset terrainObjectsLayerAsset, final TerrainObjectsAsset terrainObjectsAsset) {
@@ -103,6 +115,16 @@ public class TerrainObjectsRendererModelCacheImpl implements TerrainObjectsRende
 
         // Applies parent's transforms
         modelInstance.transform.mulLeft(parentTransform);
+    }
+
+    private boolean containsTerrainObject(final String id, final TerrainObjectsAsset terrainObjectsAsset) {
+        for (int i = 0; i < terrainObjectsAsset.getTerrainObjects().size; ++i) {
+            if (id.equals(terrainObjectsAsset.getTerrainObjects().get(i).getId())) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private ModelInstance findById(final String id) {
