@@ -18,6 +18,7 @@ import com.github.dgzt.mundus.plugin.terrainobjects.runtime.constant.PluginConst
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.manager.TerrainObjectsLayerManager
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.model.TerrainObject
 import com.mbrlabs.mundus.commons.assets.CustomAsset
+import com.mbrlabs.mundus.commons.assets.ModelAsset
 import com.mbrlabs.mundus.commons.scene3d.GameObject
 import com.mbrlabs.mundus.commons.scene3d.components.Component
 import com.mbrlabs.mundus.commons.scene3d.components.TerrainComponent
@@ -44,7 +45,7 @@ object ComponentWidgetCreator {
     }
 
     private fun setupTerrainObjectsManagerWidget(component: TerrainObjectsManagerComponent, rootWidget: RootWidget) {
-        setupTerrainObjectsLayerWidget(component, TerrainManagerTextureGridListenerImpl(), rootWidget)
+        setupTerrainObjectsLayerWidget(component, TerrainManagerTextureGridListenerImpl(component, rootWidget), rootWidget)
     }
 
     private fun setupTerrainObjectsWidget(component: TerrainObjectsComponent, rootWidget: RootWidget) {
@@ -217,6 +218,30 @@ object ComponentWidgetCreator {
         }
     }
 
+    private fun changeModelInTerrainObjectsLayerAsset(
+        textureGrid: TextureGrid,
+        terrainObjectsLayerAsset: TerrainObjectsLayerAsset,
+        newModel: ModelAsset,
+        pos: Int
+    ) {
+        terrainObjectsLayerAsset.modelAssets.removeIndex(pos)
+        terrainObjectsLayerAsset.modelAssets.insert(pos, newModel)
+
+        PropertyManager.assetManager.markAsModifiedAsset(terrainObjectsLayerAsset.terrainObjectsLasetCustomAsset) {
+            saveTerrainObjectsLayerAsset(terrainObjectsLayerAsset)
+        }
+
+        textureGrid.removeTextures()
+        setupTextureGridTextures(textureGrid, terrainObjectsLayerAsset)
+
+        val components = PropertyManager.sceneGraph.root.findComponentsByType(Array<AbstractTerrainObjectsComponent>(), PluginConstants.TYPE, true)
+        for (c in components) {
+            if (c is TerrainObjectsComponent && c.terrainObjectsLayerAsset == terrainObjectsLayerAsset) {
+                c.updateTerrainObjects(true)
+            }
+        }
+    }
+
     private class CustomAssetFilterImpl : CustomAssetFilter {
         override fun isVisible(customAsset: CustomAsset): Boolean {
             val properties = customAsset.properties
@@ -249,7 +274,10 @@ object ComponentWidgetCreator {
         }
     }
 
-    private class TerrainManagerTextureGridListenerImpl : BaseTextureGridListenerImpl() {
+    private class TerrainManagerTextureGridListenerImpl(
+        val component: TerrainObjectsManagerComponent,
+        val rootWidget: RootWidget
+    ) : BaseTextureGridListenerImpl() {
         private var selectedPos = -1
 
         override fun onSelect(pos: Int) {
@@ -258,7 +286,10 @@ object ComponentWidgetCreator {
         }
 
         override fun onChange(pos: Int) {
-            Gdx.app.log(PluginConstants.LOG_TAG, "Change: $pos")
+            rootWidget.showModelAssetSelectionDialog {
+                Gdx.app.debug(PluginConstants.LOG_TAG, "Change $pos. model to ${it.name}")
+                changeModelInTerrainObjectsLayerAsset(textureGrid, component.terrainObjectsLayerAsset, it, pos)
+            }
         }
 
         override fun onRemove(pos: Int) {
@@ -284,24 +315,9 @@ object ComponentWidgetCreator {
         }
 
         override fun onChange(pos: Int) {
-            Gdx.app.log(PluginConstants.LOG_TAG, "Change: $pos")
             rootWidget.showModelAssetSelectionDialog {
-                component.terrainObjectsLayerAsset.modelAssets.removeIndex(pos)
-                component.terrainObjectsLayerAsset.modelAssets.insert(pos, it)
-
-                PropertyManager.assetManager.markAsModifiedAsset(component.terrainObjectsLayerAsset.terrainObjectsLasetCustomAsset) {
-                    saveTerrainObjectsLayerAsset(component.terrainObjectsLayerAsset)
-                }
-
-                textureGrid.removeTextures()
-                setupTextureGridTextures(textureGrid, component.terrainObjectsLayerAsset)
-
-                val components = PropertyManager.sceneGraph.root.findComponentsByType(Array<AbstractTerrainObjectsComponent>(), PluginConstants.TYPE, true)
-                for (c in components) {
-                    if (c is TerrainObjectsComponent && c.terrainObjectsLayerAsset == component.terrainObjectsLayerAsset) {
-                        c.updateTerrainObjects(true)
-                    }
-                }
+                Gdx.app.debug(PluginConstants.LOG_TAG, "Change $pos. model to ${it.name}")
+                changeModelInTerrainObjectsLayerAsset(textureGrid, component.terrainObjectsLayerAsset, it, pos)
 
                 objectButtonPanel.clearWidgets()
                 PropertyManager.toolManager.deactivateCustomTool()
