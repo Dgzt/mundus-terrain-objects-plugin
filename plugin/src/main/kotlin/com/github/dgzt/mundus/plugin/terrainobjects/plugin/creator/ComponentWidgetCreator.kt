@@ -304,6 +304,7 @@ object ComponentWidgetCreator {
                 }
 
                 objectButtonPanel.clearWidgets()
+                PropertyManager.toolManager.deactivateCustomTool()
             }
         }
 
