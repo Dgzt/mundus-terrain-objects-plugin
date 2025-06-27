@@ -7,12 +7,15 @@ import com.badlogic.gdx.utils.Pool
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.creator.ComponentCreator
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.creator.ComponentWidgetCreator
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.listener.GameObjectModifiedListenerImpl
+import com.github.dgzt.mundus.plugin.terrainobjects.plugin.listener.ProjectChangedListenerImpl
+import com.github.dgzt.mundus.plugin.terrainobjects.plugin.listener.SceneChangedListenerImpl
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.component.AbstractTerrainObjectsComponent
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.constant.PluginConstants
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.converter.TerrainObjectsComponentConverter
 import com.mbrlabs.mundus.commons.mapper.CustomComponentConverter
 import com.mbrlabs.mundus.commons.scene3d.GameObject
 import com.mbrlabs.mundus.commons.scene3d.components.Component
+import com.mbrlabs.mundus.editorcommons.events.ProjectChangedEvent
 import com.mbrlabs.mundus.pluginapi.ComponentExtension
 import com.mbrlabs.mundus.pluginapi.ManagerHolderExtension
 import com.mbrlabs.mundus.pluginapi.MenuExtension
@@ -67,6 +70,8 @@ class TerrainObjectsPlugin : Plugin() {
             PropertyManager.toolManager = managerHolder.toolManager
             PropertyManager.viewportManager = managerHolder.viewportManager
 
+            managerHolder.eventManager.registerEventListener(ProjectChangedListenerImpl())
+            managerHolder.eventManager.registerEventListener(SceneChangedListenerImpl())
             managerHolder.eventManager.registerEventListener(GameObjectModifiedListenerImpl())
         }
     }

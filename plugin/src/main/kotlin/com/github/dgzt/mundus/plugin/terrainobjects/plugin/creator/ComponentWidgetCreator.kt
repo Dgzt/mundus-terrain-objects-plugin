@@ -50,7 +50,7 @@ object ComponentWidgetCreator {
     private fun setupTerrainObjectsWidget(component: TerrainObjectsComponent, rootWidget: RootWidget) {
         val selectedModel = SelectedModel()
 
-        val textureGridListener = TextureGridListenerImpl(component, selectedModel)
+        val textureGridListener = TextureGridListenerImpl(component, selectedModel, rootWidget)
 
         setupTerrainObjectsLayerWidget(component, textureGridListener, rootWidget)
         rootWidget.addRow()
@@ -61,7 +61,7 @@ object ComponentWidgetCreator {
         textureGridListener.objectButtonPanel = rootWidget.addEmptyWidget().rootWidget
     }
 
-    private fun setupTerrainObjectsLayerWidget(component: AbstractTerrainObjectsComponent, textureGridListener: TextureGridListener, rootWidget: RootWidget) {
+    private fun setupTerrainObjectsLayerWidget(component: AbstractTerrainObjectsComponent, textureGridListener: BaseTextureGridListenerImpl, rootWidget: RootWidget) {
         val terrainObjectsLayerAsset = component.terrainObjectsLayerAsset
 
         rootWidget.addLabel("Object layer:").setAlign(WidgetAlign.LEFT)
@@ -85,11 +85,9 @@ object ComponentWidgetCreator {
 
 
         textureGrid = rootWidget.addTextureGrid(true, true, textureGridListener).widget
+        setupTextureGridTextures(textureGrid, terrainObjectsLayerAsset)
+        textureGridListener.textureGrid = textureGrid
 
-        for (i in 0 until terrainObjectsLayerAsset.modelAssets.size) {
-            val model = terrainObjectsLayerAsset.modelAssets.get(i) as EditorModelAsset
-            textureGrid.addTexture(model)
-        }
         rootWidget.addRow()
         rootWidget.addTextButton("Add Object") {
             rootWidget.showModelAssetSelectionDialog {
@@ -102,6 +100,13 @@ object ComponentWidgetCreator {
                 }
             }
         }.setAlign(WidgetAlign.RIGHT)
+    }
+
+    private fun setupTextureGridTextures(textureGrid: TextureGrid, terrainObjectsLayerAsset: TerrainObjectsLayerAsset) {
+        for (i in 0 until terrainObjectsLayerAsset.modelAssets.size) {
+            val model = terrainObjectsLayerAsset.modelAssets.get(i) as EditorModelAsset
+            textureGrid.addTexture(model)
+        }
     }
 
     private fun saveTerrainObjectsLayerAsset(terrainObjectsLayerAsset: TerrainObjectsLayerAsset) {
@@ -244,7 +249,7 @@ object ComponentWidgetCreator {
         }
     }
 
-    private class TerrainManagerTextureGridListenerImpl : TextureGridListener {
+    private class TerrainManagerTextureGridListenerImpl : BaseTextureGridListenerImpl() {
         private var selectedPos = -1
 
         override fun onSelect(pos: Int) {
@@ -264,8 +269,9 @@ object ComponentWidgetCreator {
 
     private class TextureGridListenerImpl(
         val component: TerrainObjectsComponent,
-        val selectedModel: SelectedModel
-    ) : TextureGridListener {
+        val selectedModel: SelectedModel,
+        val rootWidget: RootWidget
+    ) : BaseTextureGridListenerImpl() {
         lateinit var objectButtonPanel: RootWidget
 
         override fun onSelect(pos: Int) {
@@ -279,11 +285,35 @@ object ComponentWidgetCreator {
 
         override fun onChange(pos: Int) {
             Gdx.app.log(PluginConstants.LOG_TAG, "Change: $pos")
+            rootWidget.showModelAssetSelectionDialog {
+                component.terrainObjectsLayerAsset.modelAssets.removeIndex(pos)
+                component.terrainObjectsLayerAsset.modelAssets.insert(pos, it)
+
+                PropertyManager.assetManager.markAsModifiedAsset(component.terrainObjectsLayerAsset.terrainObjectsLasetCustomAsset) {
+                    saveTerrainObjectsLayerAsset(component.terrainObjectsLayerAsset)
+                }
+
+                textureGrid.removeTextures()
+                setupTextureGridTextures(textureGrid, component.terrainObjectsLayerAsset)
+
+                val components = PropertyManager.sceneGraph.root.findComponentsByType(Array<AbstractTerrainObjectsComponent>(), PluginConstants.TYPE, true)
+                for (c in components) {
+                    if (c is TerrainObjectsComponent && c.terrainObjectsLayerAsset == component.terrainObjectsLayerAsset) {
+                        c.updateTerrainObjects(true)
+                    }
+                }
+
+                objectButtonPanel.clearWidgets()
+            }
         }
 
         override fun onRemove(pos: Int) {
             Gdx.app.log(PluginConstants.LOG_TAG, "Remove: $pos")
         }
+    }
+
+    private abstract class BaseTextureGridListenerImpl : TextureGridListener {
+        lateinit var textureGrid: TextureGrid
     }
 
     private class ToolListenerImpl(gameObject: GameObject, val terrainObjectsComponent: TerrainObjectsComponent, val selectedModel: SelectedModel) : ToolListener {
