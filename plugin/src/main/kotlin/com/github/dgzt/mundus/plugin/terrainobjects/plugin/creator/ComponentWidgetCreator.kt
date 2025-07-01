@@ -10,6 +10,7 @@ import com.github.dgzt.mundus.plugin.terrainobjects.plugin.PropertyManager
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.model.SelectedModel
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.utils.AssetUtils
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.utils.GameObjectUtils
+import com.github.dgzt.mundus.plugin.terrainobjects.runtime.asset.TerrainObjectsAsset
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.asset.TerrainObjectsLayerAsset
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.component.AbstractTerrainObjectsComponent
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.component.TerrainObjectsComponent
@@ -119,6 +120,11 @@ object ComponentWidgetCreator {
         val json = PropertyManager.json.toJson(modelAssetIds)
 
         terrainObjectsLayerAsset.terrainObjectsLasetCustomAsset.file.writeString(json, false)
+    }
+
+    private fun saveTerrainObjectsAsset(terrainObjectsAsset: TerrainObjectsAsset) {
+        val json = PropertyManager.json.toJson(terrainObjectsAsset.terrainObjects)
+        terrainObjectsAsset.terrainObjectsCustomAsset.file.writeString(json, false)
     }
 
     private fun setupObjectsButtonPanel(terrainObjectsComponent: TerrainObjectsComponent, gameObject: GameObject, objectButtonPanel: RootWidget, selectedModel: SelectedModel) {
@@ -242,6 +248,50 @@ object ComponentWidgetCreator {
         }
     }
 
+    private fun removeModelInTerrainObjectsLayerAsset(
+        textureGrid: TextureGrid,
+        terrainObjectsLayerAsset: TerrainObjectsLayerAsset,
+        pos: Int
+    ) {
+        terrainObjectsLayerAsset.modelAssets.removeIndex(pos)
+
+        PropertyManager.assetManager.markAsModifiedAsset(terrainObjectsLayerAsset.terrainObjectsLasetCustomAsset) {
+            saveTerrainObjectsLayerAsset(terrainObjectsLayerAsset)
+        }
+
+        textureGrid.removeTextures()
+        setupTextureGridTextures(textureGrid, terrainObjectsLayerAsset)
+
+        val components = PropertyManager.sceneGraph.root.findComponentsByType(Array<AbstractTerrainObjectsComponent>(), PluginConstants.TYPE, true)
+
+        for (c in components) {
+            if (c is TerrainObjectsComponent && c.terrainObjectsLayerAsset == terrainObjectsLayerAsset) {
+                val terrainObjectsAsset = c.terrainObjectsAsset
+                var modified = false
+
+                for (i in terrainObjectsAsset.terrainObjects.size - 1 downTo 0) {
+                    val terrainObject = terrainObjectsAsset.terrainObjects.get(i)
+
+                    if (terrainObject.modelPos == pos) {
+                        terrainObjectsAsset.terrainObjects.removeIndex(i)
+                        modified = true
+                    } else if (pos < terrainObject.modelPos) {
+                        terrainObject.modelPos -= 1
+                        modified = true
+                    }
+                }
+
+                if (modified) {
+                    c.updateTerrainObjects(true)
+                    PropertyManager.assetManager.markAsModifiedAsset(terrainObjectsAsset.terrainObjectsCustomAsset) {
+                        Gdx.app.debug(PluginConstants.LOG_TAG, "Save terrain objects asset: ${terrainObjectsAsset.terrainObjectsCustomAsset.name}")
+                        saveTerrainObjectsAsset(terrainObjectsAsset)
+                    }
+                }
+            }
+        }
+    }
+
     private class CustomAssetFilterImpl : CustomAssetFilter {
         override fun isVisible(customAsset: CustomAsset): Boolean {
             val properties = customAsset.properties
@@ -293,7 +343,8 @@ object ComponentWidgetCreator {
         }
 
         override fun onRemove(pos: Int) {
-            Gdx.app.log(PluginConstants.LOG_TAG, "Remove: $pos")
+            Gdx.app.debug(PluginConstants.LOG_TAG, "Remove $pos. model")
+            removeModelInTerrainObjectsLayerAsset(textureGrid, component.terrainObjectsLayerAsset, pos)
         }
 
     }
@@ -325,7 +376,11 @@ object ComponentWidgetCreator {
         }
 
         override fun onRemove(pos: Int) {
-            Gdx.app.log(PluginConstants.LOG_TAG, "Remove: $pos")
+            Gdx.app.debug(PluginConstants.LOG_TAG, "Remove $pos. model")
+            removeModelInTerrainObjectsLayerAsset(textureGrid, component.terrainObjectsLayerAsset, pos)
+
+            objectButtonPanel.clearWidgets()
+            PropertyManager.toolManager.deactivateCustomTool()
         }
     }
 
@@ -352,6 +407,8 @@ object ComponentWidgetCreator {
             )
 
             terrainObjectsComponent.addTerrainObject(terrainObject)
+
+            // TODO mark asset as modified
         }
 
         override fun mouseMoved(screenX: Int, screenY: Int) {
