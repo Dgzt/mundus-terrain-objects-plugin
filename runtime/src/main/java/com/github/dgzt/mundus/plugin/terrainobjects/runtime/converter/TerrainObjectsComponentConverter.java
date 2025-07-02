@@ -80,6 +80,7 @@ public class TerrainObjectsComponentConverter implements CustomComponentConverte
             final TerrainObjectsComponent terrainObjectsComponent = (TerrainObjectsComponent) component;
 
             terrainObjectsComponent.setTerrainObjectsAsset(getTerrainObjectsAsset(objectMap));
+            terrainObjectsComponent.updateTerrainObjects(true);
         }
 
         return component;
