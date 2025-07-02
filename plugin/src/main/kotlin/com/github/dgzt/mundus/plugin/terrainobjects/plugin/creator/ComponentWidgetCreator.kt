@@ -123,7 +123,7 @@ object ComponentWidgetCreator {
     }
 
     private fun saveTerrainObjectsAsset(terrainObjectsAsset: TerrainObjectsAsset) {
-        val json = PropertyManager.json.toJson(terrainObjectsAsset.terrainObjects)
+        val json = PropertyManager.json.toJson(terrainObjectsAsset.terrainObjects, Array::class.java, TerrainObject::class.java)
         terrainObjectsAsset.terrainObjectsCustomAsset.file.writeString(json, false)
     }
 
@@ -408,7 +408,11 @@ object ComponentWidgetCreator {
 
             terrainObjectsComponent.addTerrainObject(terrainObject)
 
-            // TODO mark asset as modified
+            val terrainObjectsAsset = terrainObjectsComponent.terrainObjectsAsset
+            PropertyManager.assetManager.markAsModifiedAsset(terrainObjectsAsset.terrainObjectsCustomAsset) {
+                Gdx.app.debug(PluginConstants.LOG_TAG, "Save terrain objects asset: ${terrainObjectsAsset.terrainObjectsCustomAsset.name}")
+                saveTerrainObjectsAsset(terrainObjectsAsset)
+            }
         }
 
         override fun mouseMoved(screenX: Int, screenY: Int) {
