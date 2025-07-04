@@ -25,6 +25,7 @@ import com.mbrlabs.mundus.commons.scene3d.components.Component
 import com.mbrlabs.mundus.commons.scene3d.components.TerrainComponent
 import com.mbrlabs.mundus.editorcommons.assets.EditorModelAsset
 import com.mbrlabs.mundus.pluginapi.listener.ToolListener
+import com.mbrlabs.mundus.pluginapi.manager.GameObjectPickerManager
 import com.mbrlabs.mundus.pluginapi.ui.CustomAssetFilter
 import com.mbrlabs.mundus.pluginapi.ui.CustomAssetSelectionDialogListener
 import com.mbrlabs.mundus.pluginapi.ui.Label
@@ -136,12 +137,13 @@ object ComponentWidgetCreator {
             optionsPanel.clearWidgets()
             setupAddOptionPanel(selectedModel, optionsPanel)
 
-            PropertyManager.toolManager.activateCustomTool(ToolListenerImpl(gameObject, terrainObjectsComponent, selectedModel))
+            PropertyManager.toolManager.activateCustomTool(AddToolListenerImpl(gameObject, terrainObjectsComponent, selectedModel))
         }.setPad(0f, 20f, 0f, 0f)
 
         buttonsPanel.addTextButton("Remove") {
             optionsPanel.clearWidgets()
-            // TODO
+            setupDeleteOptionPanel(optionsPanel)
+            PropertyManager.toolManager.activateCustomTool(DeleteToolListenerImpl())
         }
     }
 
@@ -185,7 +187,15 @@ object ComponentWidgetCreator {
             selectedModel.scaleZ = it
             applyTransformations(selectedModel)
         }.setPad(0f, 5f, 0f, 0f)
+    }
 
+    private fun setupDeleteOptionPanel(rootWidget: RootWidget) {
+        val defaultRadius = 25f
+
+        PropertyManager.terrainPickerManager.setRadius(defaultRadius)
+        rootWidget.addSpinner("Radius", 0.1f, Float.MAX_VALUE, defaultRadius, 1f) {
+            PropertyManager.terrainPickerManager.setRadius(it)
+        }
     }
 
     private fun applyTransformations(selectedModel: SelectedModel) {
@@ -388,7 +398,7 @@ object ComponentWidgetCreator {
         lateinit var textureGrid: TextureGrid
     }
 
-    private class ToolListenerImpl(gameObject: GameObject, val terrainObjectsComponent: TerrainObjectsComponent, val selectedModel: SelectedModel) : ToolListener {
+    private class AddToolListenerImpl(gameObject: GameObject, val terrainObjectsComponent: TerrainObjectsComponent, val selectedModel: SelectedModel) : ToolListener {
 
         private val terrainComponent = gameObject.findComponentByType<TerrainComponent>(Component.Type.TERRAIN)
         private var tmpVector3 = Vector3()
@@ -431,6 +441,35 @@ object ComponentWidgetCreator {
 
         override fun onDisabled() {
             PropertyManager.selectedModelInstance = null
+        }
+
+    }
+
+    private class DeleteToolListenerImpl : ToolListener {
+
+        private val brushPos = Vector3()
+
+        init {
+            PropertyManager.terrainPickerManager.activate(true)
+        }
+
+        override fun touchDown(screenX: Int, screenY: Int, buttonId: Int) {
+            // NOOP
+        }
+
+        override fun mouseMoved(screenX: Int, screenY: Int) {
+            val go = PropertyManager.gameObjectPickerManager.pick(screenX, screenY, GameObjectPickerManager.ComponentType.TERRAIN)
+            if (go != null) {
+                val terrainComponent = go.findComponentByType<TerrainComponent>(Component.Type.TERRAIN)
+                val ray = PropertyManager.viewportManager.getPickRay(screenX.toFloat(), screenY.toFloat())
+                terrainComponent.getRayIntersection(brushPos, ray)
+
+                PropertyManager.terrainPickerManager.setPosition(brushPos.x, brushPos.y, brushPos.z)
+            }
+        }
+
+        override fun onDisabled() {
+            PropertyManager.terrainPickerManager.activate(false)
         }
 
     }

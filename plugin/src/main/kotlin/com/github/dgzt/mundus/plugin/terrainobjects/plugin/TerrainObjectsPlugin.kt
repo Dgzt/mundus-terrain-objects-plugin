@@ -69,6 +69,8 @@ class TerrainObjectsPlugin : Plugin() {
             PropertyManager.assetManager = managerHolder.assetManager
             PropertyManager.toolManager = managerHolder.toolManager
             PropertyManager.viewportManager = managerHolder.viewportManager
+            PropertyManager.gameObjectPickerManager = managerHolder.gameObjectPickerManager
+            PropertyManager.terrainPickerManager = managerHolder.terrainPickerManager
 
             managerHolder.eventManager.registerEventListener(ProjectChangedListenerImpl())
             managerHolder.eventManager.registerEventListener(SceneChangedListenerImpl())

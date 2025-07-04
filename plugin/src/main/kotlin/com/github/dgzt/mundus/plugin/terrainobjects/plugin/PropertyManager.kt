@@ -5,6 +5,8 @@ import com.badlogic.gdx.utils.Json
 import com.badlogic.gdx.utils.JsonWriter
 import com.mbrlabs.mundus.commons.scene3d.SceneGraph
 import com.mbrlabs.mundus.pluginapi.manager.AssetManager
+import com.mbrlabs.mundus.pluginapi.manager.GameObjectPickerManager
+import com.mbrlabs.mundus.pluginapi.manager.TerrainPickerManager
 import com.mbrlabs.mundus.pluginapi.manager.ToolManager
 import com.mbrlabs.mundus.pluginapi.manager.ViewportManager
 
@@ -14,6 +16,8 @@ object PropertyManager {
     lateinit var assetManager: AssetManager
     lateinit var toolManager: ToolManager
     lateinit var viewportManager: ViewportManager
+    lateinit var gameObjectPickerManager: GameObjectPickerManager
+    lateinit var terrainPickerManager: TerrainPickerManager
 
     lateinit var sceneGraph: SceneGraph
 
