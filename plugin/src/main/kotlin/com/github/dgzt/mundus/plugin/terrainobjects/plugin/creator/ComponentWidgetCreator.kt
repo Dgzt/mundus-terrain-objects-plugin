@@ -425,6 +425,10 @@ object ComponentWidgetCreator {
             }
         }
 
+        override fun touchDragged(p0: Int, p1: Int) {
+            // NOOP
+        }
+
         override fun mouseMoved(screenX: Int, screenY: Int) {
             val ray = PropertyManager.viewportManager.getPickRay(screenX.toFloat(), screenY.toFloat())
             tmpVector3 = terrainComponent.getRayIntersection(tmpVector3, ray)
@@ -455,6 +459,10 @@ object ComponentWidgetCreator {
 
         override fun touchDown(screenX: Int, screenY: Int, buttonId: Int) {
             // NOOP
+        }
+
+        override fun touchDragged(screenX: Int, screenY: Int) {
+            mouseMoved(screenX, screenY)
         }
 
         override fun mouseMoved(screenX: Int, screenY: Int) {
