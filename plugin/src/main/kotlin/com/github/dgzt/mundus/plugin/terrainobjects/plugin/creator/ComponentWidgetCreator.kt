@@ -7,6 +7,7 @@ import com.badlogic.gdx.math.Quaternion
 import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.Array
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.PropertyManager
+import com.github.dgzt.mundus.plugin.terrainobjects.plugin.model.DeleteModel
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.model.SelectedModel
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.utils.AssetUtils
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.utils.GameObjectUtils
@@ -142,8 +143,10 @@ object ComponentWidgetCreator {
 
         buttonsPanel.addTextButton("Remove") {
             optionsPanel.clearWidgets()
-            setupDeleteOptionPanel(optionsPanel)
-            PropertyManager.toolManager.activateCustomTool(DeleteToolListenerImpl())
+            val deleteModel = DeleteModel(25f)
+
+            setupDeleteOptionPanel(deleteModel, optionsPanel)
+            PropertyManager.toolManager.activateCustomTool(DeleteToolListenerImpl(terrainObjectsComponent, deleteModel))
         }
     }
 
@@ -189,12 +192,11 @@ object ComponentWidgetCreator {
         }.setPad(0f, 5f, 0f, 0f)
     }
 
-    private fun setupDeleteOptionPanel(rootWidget: RootWidget) {
-        val defaultRadius = 25f
-
-        PropertyManager.terrainPickerManager.setRadius(defaultRadius)
-        rootWidget.addSpinner("Radius", 0.1f, Float.MAX_VALUE, defaultRadius, 1f) {
-            PropertyManager.terrainPickerManager.setRadius(it)
+    private fun setupDeleteOptionPanel(deleteModel: DeleteModel, rootWidget: RootWidget) {
+        PropertyManager.terrainPickerManager.setRadius(deleteModel.radius)
+        rootWidget.addSpinner("Radius", 0.1f, Float.MAX_VALUE, deleteModel.radius, 1f) {
+            deleteModel.radius = it
+            PropertyManager.terrainPickerManager.setRadius(deleteModel.radius)
         }
     }
 
@@ -298,6 +300,32 @@ object ComponentWidgetCreator {
                         saveTerrainObjectsAsset(terrainObjectsAsset)
                     }
                 }
+            }
+        }
+    }
+
+    private fun removeTerrainObjects(terrainObjectsComponent: TerrainObjectsComponent, deleteModel: DeleteModel) {
+        val terrainObjectsAsset = terrainObjectsComponent.terrainObjectsAsset
+        val terrainObjects = terrainObjectsAsset.terrainObjects
+
+        var modified = false
+
+        for (i in terrainObjects.size - 1 downTo 0) {
+            val terrainObject = terrainObjects.get(i)
+            val distance = terrainObject.position.dst(deleteModel.brushLocalPos)
+
+            if (distance <= deleteModel.radius) {
+                terrainObjects.removeIndex(i)
+                modified = true
+            }
+        }
+
+        if (modified) {
+            terrainObjectsComponent.updateTerrainObjects()
+
+            PropertyManager.assetManager.markAsModifiedAsset(terrainObjectsAsset.terrainObjectsCustomAsset) {
+                Gdx.app.debug(PluginConstants.LOG_TAG, "Save terrain objects asset: ${terrainObjectsAsset.terrainObjectsCustomAsset.name}")
+                saveTerrainObjectsAsset(terrainObjectsAsset)
             }
         }
     }
@@ -449,20 +477,25 @@ object ComponentWidgetCreator {
 
     }
 
-    private class DeleteToolListenerImpl : ToolListener {
+    private class DeleteToolListenerImpl(val terrainObjectsComponent: TerrainObjectsComponent, val deleteModel: DeleteModel) : ToolListener {
 
+        private val terrainComponent = terrainObjectsComponent.gameObject.findComponentByType<TerrainComponent>(Component.Type.TERRAIN)
         private val brushPos = Vector3()
+        private var tmpMatrix4 = Matrix4()
 
         init {
             PropertyManager.terrainPickerManager.activate(true)
         }
 
         override fun touchDown(screenX: Int, screenY: Int, buttonId: Int) {
-            // NOOP
+            // Set brush local position to terrain component
+            deleteModel.brushLocalPos.set(brushPos).mul(tmpMatrix4.set(terrainComponent.modelInstance.transform).inv())
+            removeTerrainObjects(terrainObjectsComponent, deleteModel)
         }
 
         override fun touchDragged(screenX: Int, screenY: Int) {
             mouseMoved(screenX, screenY)
+            touchDown(screenX, screenY, -1)
         }
 
         override fun mouseMoved(screenX: Int, screenY: Int) {
