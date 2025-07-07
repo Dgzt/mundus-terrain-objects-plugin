@@ -143,7 +143,7 @@ object ComponentWidgetCreator {
 
         buttonsPanel.addTextButton("Remove") {
             optionsPanel.clearWidgets()
-            val deleteModel = DeleteModel(25f)
+            val deleteModel = DeleteModel(selectedModel.pos, 25f)
 
             setupDeleteOptionPanel(deleteModel, optionsPanel)
             PropertyManager.toolManager.activateCustomTool(DeleteToolListenerImpl(terrainObjectsComponent, deleteModel))
@@ -314,7 +314,7 @@ object ComponentWidgetCreator {
             val terrainObject = terrainObjects.get(i)
             val distance = terrainObject.position.dst(deleteModel.brushLocalPos)
 
-            if (distance <= deleteModel.radius) {
+            if (deleteModel.selectedModelPos == terrainObject.modelPos && distance <= deleteModel.radius) {
                 terrainObjects.removeIndex(i)
                 modified = true
             }
