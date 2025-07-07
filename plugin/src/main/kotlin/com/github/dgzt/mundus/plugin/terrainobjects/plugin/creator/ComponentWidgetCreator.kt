@@ -118,7 +118,7 @@ object ComponentWidgetCreator {
             modelAssetIds.add(modelAsset.id)
         }
 
-        val json = PropertyManager.json.toJson(modelAssetIds)
+        val json = PropertyManager.json.toJson(modelAssetIds, Array::class.java, String::class.java)
 
         terrainObjectsLayerAsset.terrainObjectsLasetCustomAsset.file.writeString(json, false)
     }
