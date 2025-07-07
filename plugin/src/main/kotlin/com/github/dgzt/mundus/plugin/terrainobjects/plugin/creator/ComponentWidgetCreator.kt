@@ -11,7 +11,6 @@ import com.github.dgzt.mundus.plugin.terrainobjects.plugin.model.DeleteModel
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.model.SelectedModel
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.utils.AssetUtils
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.utils.GameObjectUtils
-import com.github.dgzt.mundus.plugin.terrainobjects.runtime.asset.TerrainObjectsAsset
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.asset.TerrainObjectsLayerAsset
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.component.AbstractTerrainObjectsComponent
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.component.TerrainObjectsComponent
@@ -124,7 +123,9 @@ object ComponentWidgetCreator {
         terrainObjectsLayerAsset.terrainObjectsLasetCustomAsset.file.writeString(json, false)
     }
 
-    private fun saveTerrainObjectsAsset(terrainObjectsAsset: TerrainObjectsAsset) {
+    private fun saveTerrainObjectsAsset(terrainObjectsComponent: TerrainObjectsComponent) {
+        val terrainObjectsAsset = terrainObjectsComponent.terrainObjectsAsset
+
         val json = PropertyManager.json.toJson(terrainObjectsAsset.terrainObjects, Array::class.java, TerrainObject::class.java)
         terrainObjectsAsset.terrainObjectsCustomAsset.file.writeString(json, false)
     }
@@ -297,7 +298,7 @@ object ComponentWidgetCreator {
                     c.updateTerrainObjects(true)
                     PropertyManager.assetManager.markAsModifiedAsset(terrainObjectsAsset.terrainObjectsCustomAsset) {
                         Gdx.app.debug(PluginConstants.LOG_TAG, "Save terrain objects asset: ${terrainObjectsAsset.terrainObjectsCustomAsset.name}")
-                        saveTerrainObjectsAsset(terrainObjectsAsset)
+                        saveTerrainObjectsAsset(c)
                     }
                 }
             }
@@ -325,7 +326,7 @@ object ComponentWidgetCreator {
 
             PropertyManager.assetManager.markAsModifiedAsset(terrainObjectsAsset.terrainObjectsCustomAsset) {
                 Gdx.app.debug(PluginConstants.LOG_TAG, "Save terrain objects asset: ${terrainObjectsAsset.terrainObjectsCustomAsset.name}")
-                saveTerrainObjectsAsset(terrainObjectsAsset)
+                saveTerrainObjectsAsset(terrainObjectsComponent)
             }
         }
     }
@@ -449,7 +450,7 @@ object ComponentWidgetCreator {
             val terrainObjectsAsset = terrainObjectsComponent.terrainObjectsAsset
             PropertyManager.assetManager.markAsModifiedAsset(terrainObjectsAsset.terrainObjectsCustomAsset) {
                 Gdx.app.debug(PluginConstants.LOG_TAG, "Save terrain objects asset: ${terrainObjectsAsset.terrainObjectsCustomAsset.name}")
-                saveTerrainObjectsAsset(terrainObjectsAsset)
+                saveTerrainObjectsAsset(terrainObjectsComponent)
             }
         }
 

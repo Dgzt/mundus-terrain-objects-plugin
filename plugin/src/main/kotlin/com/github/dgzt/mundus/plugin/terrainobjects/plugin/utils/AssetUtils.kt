@@ -35,6 +35,7 @@ object AssetUtils {
         tmpFile.delete()
 
         customAsset.properties.put(PluginConstants.CUSTOM_ASSET_TYPE_KEY, PluginConstants.CUSTOM_ASSET_TYPE_TERRAIN_OBJECTS)
+        customAsset.properties.put(PluginConstants.CUSTOM_ASSET_NEXT_TERRAIN_OBJECT_ID_KEY, 0.toString())
         PropertyManager.assetManager.markAsModifiedAsset(customAsset)
 
         return customAsset

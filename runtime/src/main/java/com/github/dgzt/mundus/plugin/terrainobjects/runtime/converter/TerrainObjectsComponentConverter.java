@@ -78,8 +78,10 @@ public class TerrainObjectsComponentConverter implements CustomComponentConverte
 
         if (hasTerrainObjectsAsset) {
             final TerrainObjectsComponent terrainObjectsComponent = (TerrainObjectsComponent) component;
+            final TerrainObjectsAsset terrainObjectsAsset = getTerrainObjectsAsset(objectMap);
 
-            terrainObjectsComponent.setTerrainObjectsAsset(getTerrainObjectsAsset(objectMap));
+            terrainObjectsComponent.setTerrainObjectsAsset(terrainObjectsAsset);
+            terrainObjectsComponent.setNextTerrainObjectId(Integer.parseInt(terrainObjectsAsset.getTerrainObjectsCustomAsset().getProperties().get(PluginConstants.CUSTOM_ASSET_NEXT_TERRAIN_OBJECT_ID_KEY)));
             terrainObjectsComponent.updateTerrainObjects(true);
         }
 
