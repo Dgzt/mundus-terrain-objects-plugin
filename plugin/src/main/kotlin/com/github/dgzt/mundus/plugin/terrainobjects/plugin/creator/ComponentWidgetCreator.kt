@@ -168,19 +168,19 @@ object ComponentWidgetCreator {
         rootWidget.addLabel("Rotation")
         rootWidget.addRow()
         rootWidget.addLabel("X").setPad(0f, 5f, 0f, 5f)
-        rootWidget.addSliderWithSpinnerWidget(0f, 359.9f, 0.1f, 1) { // TODO set init value
+        rootWidget.addSliderWithSpinnerWidget(0f, 359.9f, addActionModel.rotationX, 0.1f, 1) {
             addActionModel.rotationX = it
             applySelectedModelTransformations(selectedModel)
         }
         rootWidget.addRow()
         rootWidget.addLabel("Y").setPad(0f, 5f, 0f, 5f)
-        rootWidget.addSliderWithSpinnerWidget(0f, 359.9f, 0.1f, 1) { // TODO set init value
+        rootWidget.addSliderWithSpinnerWidget(0f, 359.9f, addActionModel.rotationY, 0.1f, 1) {
             addActionModel.rotationY = it
             applySelectedModelTransformations(selectedModel)
         }
         rootWidget.addRow()
         rootWidget.addLabel("Z").setPad(0f, 5f, 0f, 5f)
-        rootWidget.addSliderWithSpinnerWidget(0f, 359.9f, 0.1f, 1) { // TODO set init value
+        rootWidget.addSliderWithSpinnerWidget(0f, 359.9f, addActionModel.rotationZ, 0.1f, 1) {
             addActionModel.rotationZ = it
             applySelectedModelTransformations(selectedModel)
         }
