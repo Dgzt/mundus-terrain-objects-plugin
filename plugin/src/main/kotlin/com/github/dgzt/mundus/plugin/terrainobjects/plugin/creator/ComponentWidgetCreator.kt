@@ -7,7 +7,8 @@ import com.badlogic.gdx.math.Quaternion
 import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.Array
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.PropertyManager
-import com.github.dgzt.mundus.plugin.terrainobjects.plugin.model.DeleteModel
+import com.github.dgzt.mundus.plugin.terrainobjects.plugin.model.AddActionModel
+import com.github.dgzt.mundus.plugin.terrainobjects.plugin.model.DeleteActionModel
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.model.SelectedModel
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.utils.AssetUtils
 import com.github.dgzt.mundus.plugin.terrainobjects.plugin.utils.GameObjectUtils
@@ -137,6 +138,7 @@ object ComponentWidgetCreator {
 
         buttonsPanel.addTextButton("Add") {
             optionsPanel.clearWidgets()
+            selectedModel.actionModel = AddActionModel()
             setupAddOptionPanel(selectedModel, optionsPanel)
 
             PropertyManager.toolManager.activateCustomTool(AddToolListenerImpl(gameObject, terrainObjectsComponent, selectedModel))
@@ -144,56 +146,68 @@ object ComponentWidgetCreator {
 
         buttonsPanel.addTextButton("Remove") {
             optionsPanel.clearWidgets()
-            val deleteModel = DeleteModel(selectedModel.pos, 25f)
+            selectedModel.actionModel = DeleteActionModel()
+            setupDeleteOptionPanel(selectedModel, optionsPanel)
 
-            setupDeleteOptionPanel(deleteModel, optionsPanel)
-            PropertyManager.toolManager.activateCustomTool(DeleteToolListenerImpl(terrainObjectsComponent, deleteModel))
+            PropertyManager.toolManager.activateCustomTool(DeleteToolListenerImpl(terrainObjectsComponent, selectedModel))
+        }
+
+        if (selectedModel.isActionModelInitialized()) {
+            if (selectedModel.actionModel is AddActionModel) {
+                setupAddOptionPanel(selectedModel, optionsPanel)
+            } else if (selectedModel.actionModel is DeleteActionModel) {
+                setupDeleteOptionPanel(selectedModel, optionsPanel)
+            }
         }
     }
 
     private fun setupAddOptionPanel(selectedModel: SelectedModel, rootWidget: RootWidget) {
+        val addActionModel = selectedModel.actionModel as AddActionModel
+
         // rotation
         rootWidget.addLabel("Rotation")
         rootWidget.addRow()
         rootWidget.addLabel("X").setPad(0f, 5f, 0f, 5f)
-        rootWidget.addSliderWithSpinnerWidget(0f, 359.9f, 0.1f, 1) {
-            selectedModel.rotationX = it
-            applyTransformations(selectedModel)
+        rootWidget.addSliderWithSpinnerWidget(0f, 359.9f, 0.1f, 1) { // TODO set init value
+            addActionModel.rotationX = it
+            applySelectedModelTransformations(selectedModel)
         }
         rootWidget.addRow()
         rootWidget.addLabel("Y").setPad(0f, 5f, 0f, 5f)
-        rootWidget.addSliderWithSpinnerWidget(0f, 359.9f, 0.1f, 1) {
-            selectedModel.rotationY = it
-            applyTransformations(selectedModel)
+        rootWidget.addSliderWithSpinnerWidget(0f, 359.9f, 0.1f, 1) { // TODO set init value
+            addActionModel.rotationY = it
+            applySelectedModelTransformations(selectedModel)
         }
         rootWidget.addRow()
         rootWidget.addLabel("Z").setPad(0f, 5f, 0f, 5f)
-        rootWidget.addSliderWithSpinnerWidget(0f, 359.9f, 0.1f, 1) {
-            selectedModel.rotationZ = it
-            applyTransformations(selectedModel)
+        rootWidget.addSliderWithSpinnerWidget(0f, 359.9f, 0.1f, 1) { // TODO set init value
+            addActionModel.rotationZ = it
+            applySelectedModelTransformations(selectedModel)
         }
         rootWidget.addRow()
 
         // scale
         rootWidget.addLabel("Scale")
         rootWidget.addRow()
-        rootWidget.addSpinner("X", 0.1f, Float.MAX_VALUE, 1.0f, 0.1f) {
-            selectedModel.scaleX = it
-            applyTransformations(selectedModel)
+        rootWidget.addSpinner("X", 0.1f, Float.MAX_VALUE, addActionModel.scaleX, 0.1f) {
+            addActionModel.scaleX = it
+            applySelectedModelTransformations(selectedModel)
         }.setPad(0f, 5f, 0f, 0f)
         rootWidget.addRow()
-        rootWidget.addSpinner("Y", 0.1f, Float.MAX_VALUE, 1.0f, 0.1f) {
-            selectedModel.scaleY = it
-            applyTransformations(selectedModel)
+        rootWidget.addSpinner("Y", 0.1f, Float.MAX_VALUE, addActionModel.scaleY, 0.1f) {
+            addActionModel.scaleY = it
+            applySelectedModelTransformations(selectedModel)
         }.setPad(0f, 5f, 0f, 0f)
         rootWidget.addRow()
-        rootWidget.addSpinner("Z", 0.1f, Float.MAX_VALUE, 1.0f, 0.1f) {
-            selectedModel.scaleZ = it
-            applyTransformations(selectedModel)
+        rootWidget.addSpinner("Z", 0.1f, Float.MAX_VALUE, addActionModel.scaleZ, 0.1f) {
+            addActionModel.scaleZ = it
+            applySelectedModelTransformations(selectedModel)
         }.setPad(0f, 5f, 0f, 0f)
     }
 
-    private fun setupDeleteOptionPanel(deleteModel: DeleteModel, rootWidget: RootWidget) {
+    private fun setupDeleteOptionPanel(selectedModel: SelectedModel, rootWidget: RootWidget) {
+        val deleteModel = selectedModel.actionModel as DeleteActionModel
+
         PropertyManager.terrainPickerManager.setRadius(deleteModel.radius)
         rootWidget.addSpinner("Radius", 0.1f, Float.MAX_VALUE, deleteModel.radius, 1f) {
             deleteModel.radius = it
@@ -201,18 +215,20 @@ object ComponentWidgetCreator {
         }
     }
 
-    private fun applyTransformations(selectedModel: SelectedModel) {
+    private fun applySelectedModelTransformations(selectedModel: SelectedModel) {
+        val addActionModel = selectedModel.actionModel as AddActionModel
+
         // Position
         PropertyManager.selectedModelInstance?.transform?.idt()
-        PropertyManager.selectedModelInstance?.transform?.translate(selectedModel.posX, selectedModel.posY, selectedModel.posZ)
+        PropertyManager.selectedModelInstance?.transform?.translate(addActionModel.position.x, addActionModel.position.y, addActionModel.position.z)
 
         // Rotation
         val quaternion = Quaternion()
-        quaternion.setEulerAngles(selectedModel.rotationY, selectedModel.rotationX, selectedModel.rotationZ)
+        quaternion.setEulerAngles(addActionModel.rotationY, addActionModel.rotationX, addActionModel.rotationZ)
         PropertyManager.selectedModelInstance?.transform?.rotate(quaternion)
 
         // Scaling
-        PropertyManager.selectedModelInstance?.transform?.scale(selectedModel.scaleX, selectedModel.scaleY, selectedModel.scaleZ)
+        PropertyManager.selectedModelInstance?.transform?.scale(addActionModel.scaleX, addActionModel.scaleY, addActionModel.scaleZ)
     }
 
     private fun duplicateTerrainObjectsLayer(
@@ -305,7 +321,8 @@ object ComponentWidgetCreator {
         }
     }
 
-    private fun removeTerrainObjects(terrainObjectsComponent: TerrainObjectsComponent, deleteModel: DeleteModel) {
+    private fun removeTerrainObjects(terrainObjectsComponent: TerrainObjectsComponent, selectedModel: SelectedModel) {
+        val deleteActionModel = selectedModel.actionModel as DeleteActionModel
         val terrainObjectsAsset = terrainObjectsComponent.terrainObjectsAsset
         val terrainObjects = terrainObjectsAsset.terrainObjects
 
@@ -313,9 +330,9 @@ object ComponentWidgetCreator {
 
         for (i in terrainObjects.size - 1 downTo 0) {
             val terrainObject = terrainObjects.get(i)
-            val distance = terrainObject.position.dst(deleteModel.brushLocalPos)
+            val distance = terrainObject.position.dst(deleteActionModel.position)
 
-            if (deleteModel.selectedModelPos == terrainObject.modelPos && distance <= deleteModel.radius) {
+            if (selectedModel.pos == terrainObject.modelPos && distance <= deleteActionModel.radius) {
                 terrainObjects.removeIndex(i)
                 modified = true
             }
@@ -402,6 +419,11 @@ object ComponentWidgetCreator {
 
             objectButtonPanel.clearWidgets()
             setupObjectsButtonPanel(component, component.gameObject, objectButtonPanel, selectedModel)
+
+            if (PropertyManager.selectedModelInstance != null) {
+                PropertyManager.selectedModelInstance = ModelInstance(selectedModel.modelAsset.model)
+                applySelectedModelTransformations(selectedModel)
+            }
         }
 
         override fun onChange(pos: Int) {
@@ -430,6 +452,7 @@ object ComponentWidgetCreator {
     private class AddToolListenerImpl(gameObject: GameObject, val terrainObjectsComponent: TerrainObjectsComponent, val selectedModel: SelectedModel) : ToolListener {
 
         private val terrainComponent = gameObject.findComponentByType<TerrainComponent>(Component.Type.TERRAIN)
+        private val addActionModel = selectedModel.actionModel as AddActionModel
         private var tmpVector3 = Vector3()
         private var tmpMatrix4 = Matrix4()
 
@@ -440,9 +463,9 @@ object ComponentWidgetCreator {
         override fun touchDown(screenX: Int, screenY: Int, buttonId: Int) {
             val terrainObject = TerrainObject(
                 selectedModel.pos,
-                selectedModel.posX, selectedModel.posY, selectedModel.posZ,
-                selectedModel.rotationX, selectedModel.rotationY, selectedModel.rotationZ,
-                selectedModel.scaleX, selectedModel.scaleY, selectedModel.scaleZ
+                addActionModel.position.x, addActionModel.position.y, addActionModel.position.z,
+                addActionModel.rotationX, addActionModel.rotationY, addActionModel.rotationZ,
+                addActionModel.scaleX, addActionModel.scaleY, addActionModel.scaleZ
             )
 
             terrainObjectsComponent.addTerrainObject(terrainObject)
@@ -465,11 +488,11 @@ object ComponentWidgetCreator {
             // convert to local coordinate
             tmpVector3.mul(tmpMatrix4.set(terrainComponent.modelInstance.transform).inv())
 
-            selectedModel.posX = tmpVector3.x
-            selectedModel.posY = tmpVector3.y
-            selectedModel.posZ = tmpVector3.z
+            addActionModel.position.x = tmpVector3.x
+            addActionModel.position.y = tmpVector3.y
+            addActionModel.position.z = tmpVector3.z
 
-            applyTransformations(selectedModel)
+            applySelectedModelTransformations(selectedModel)
         }
 
         override fun onDisabled() {
@@ -478,9 +501,10 @@ object ComponentWidgetCreator {
 
     }
 
-    private class DeleteToolListenerImpl(val terrainObjectsComponent: TerrainObjectsComponent, val deleteModel: DeleteModel) : ToolListener {
+    private class DeleteToolListenerImpl(val terrainObjectsComponent: TerrainObjectsComponent, val selectedModel: SelectedModel) : ToolListener {
 
         private val terrainComponent = terrainObjectsComponent.gameObject.findComponentByType<TerrainComponent>(Component.Type.TERRAIN)
+        private val deleteActionModel = selectedModel.actionModel as DeleteActionModel
         private val brushPos = Vector3()
         private var tmpMatrix4 = Matrix4()
 
@@ -490,8 +514,8 @@ object ComponentWidgetCreator {
 
         override fun touchDown(screenX: Int, screenY: Int, buttonId: Int) {
             // Set brush local position to terrain component
-            deleteModel.brushLocalPos.set(brushPos).mul(tmpMatrix4.set(terrainComponent.modelInstance.transform).inv())
-            removeTerrainObjects(terrainObjectsComponent, deleteModel)
+            deleteActionModel.position.set(brushPos).mul(tmpMatrix4.set(terrainComponent.modelInstance.transform).inv())
+            removeTerrainObjects(terrainObjectsComponent, selectedModel)
         }
 
         override fun touchDragged(screenX: Int, screenY: Int) {
