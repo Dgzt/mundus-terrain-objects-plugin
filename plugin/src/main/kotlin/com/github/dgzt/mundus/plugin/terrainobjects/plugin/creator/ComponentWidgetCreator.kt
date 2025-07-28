@@ -33,6 +33,7 @@ import com.mbrlabs.mundus.pluginapi.ui.Label
 import com.mbrlabs.mundus.pluginapi.ui.RootWidget
 import com.mbrlabs.mundus.pluginapi.ui.TextureGrid
 import com.mbrlabs.mundus.pluginapi.ui.TextureGridListener
+import com.mbrlabs.mundus.pluginapi.ui.TextureGridRightClickMenuItem
 import com.mbrlabs.mundus.pluginapi.ui.WidgetAlign
 
 object ComponentWidgetCreator {
@@ -48,24 +49,39 @@ object ComponentWidgetCreator {
     }
 
     private fun setupTerrainObjectsManagerWidget(component: TerrainObjectsManagerComponent, rootWidget: RootWidget) {
-        setupTerrainObjectsLayerWidget(component, TerrainManagerTextureGridListenerImpl(component, rootWidget), rootWidget)
+        setupTerrainObjectsLayerWidget(component,
+            TerrainManagerTextureGridRightClickChangeMenuItem(component, rootWidget),
+            TerrainManagerTextureGridRightClickRemoveMenuItem(component),
+            TerrainManagerTextureGridListenerImpl(),
+            rootWidget
+        )
     }
 
     private fun setupTerrainObjectsWidget(component: TerrainObjectsComponent, rootWidget: RootWidget) {
         val selectedModel = SelectedModel()
 
-        val textureGridListener = TextureGridListenerImpl(component, selectedModel, rootWidget)
+        val textureGridChangeMenuItem = TextureGridRightClickChangeMenuItem(component, rootWidget)
+        val textureGridRemoveMenuItem = TextureGridRightClickRemoveMenuItem(component)
+        val textureGridListener = TextureGridListenerImpl(component, selectedModel)
 
-        setupTerrainObjectsLayerWidget(component, textureGridListener, rootWidget)
+        setupTerrainObjectsLayerWidget(component, textureGridChangeMenuItem, textureGridRemoveMenuItem, textureGridListener, rootWidget)
         rootWidget.addRow()
 
         // Object grid
 
         rootWidget.addRow()
-        textureGridListener.objectButtonPanel = rootWidget.addEmptyWidget().rootWidget
+        val objectButtonPanel = rootWidget.addEmptyWidget().rootWidget
+
+        textureGridChangeMenuItem.objectButtonPanel = objectButtonPanel
+        textureGridRemoveMenuItem.objectButtonPanel = objectButtonPanel
+        textureGridListener.objectButtonPanel = objectButtonPanel
     }
 
-    private fun setupTerrainObjectsLayerWidget(component: AbstractTerrainObjectsComponent, textureGridListener: BaseTextureGridListenerImpl, rootWidget: RootWidget) {
+    private fun setupTerrainObjectsLayerWidget(component: AbstractTerrainObjectsComponent,
+                                               changeTextureGridRightClickChangeMenuItem: BaseTextureGridRightClickMenuItem,
+                                               removeTextureGridRightClickChangeMenuItem: BaseTextureGridRightClickMenuItem,
+                                               textureGridListener: BaseTextureGridListenerImpl,
+                                               rootWidget: RootWidget) {
         val terrainObjectsLayerAsset = component.terrainObjectsLayerAsset
 
         rootWidget.addLabel("Object layer:").setAlign(WidgetAlign.LEFT)
@@ -87,10 +103,15 @@ object ComponentWidgetCreator {
         rootWidget.addRow()
         var textureGrid: TextureGrid
 
+        val rightClickMenuArray = Array<TextureGridRightClickMenuItem>()
+        rightClickMenuArray.add(changeTextureGridRightClickChangeMenuItem)
+        rightClickMenuArray.add(removeTextureGridRightClickChangeMenuItem)
 
-        textureGrid = rootWidget.addTextureGrid(true, true, textureGridListener).widget
+        textureGrid = rootWidget.addTextureGrid(rightClickMenuArray, textureGridListener).widget
         setupTextureGridTextures(textureGrid, terrainObjectsLayerAsset)
         textureGridListener.textureGrid = textureGrid
+        changeTextureGridRightClickChangeMenuItem.textureGrid = textureGrid
+        removeTextureGridRightClickChangeMenuItem.textureGrid = textureGrid
 
         rootWidget.addRow()
         rootWidget.addTextButton("Add Object") {
@@ -381,34 +402,40 @@ object ComponentWidgetCreator {
     }
 
     private class TerrainManagerTextureGridListenerImpl(
-        val component: TerrainObjectsManagerComponent,
-        val rootWidget: RootWidget
     ) : BaseTextureGridListenerImpl() {
-        private var selectedPos = -1
-
         override fun onSelect(pos: Int) {
             Gdx.app.log(PluginConstants.LOG_TAG, "Select: $pos")
-            selectedPos = pos
         }
+    }
 
-        override fun onChange(pos: Int) {
+    private class TerrainManagerTextureGridRightClickChangeMenuItem(
+        val component: TerrainObjectsManagerComponent,
+        val rootWidget: RootWidget
+    ) : BaseTextureGridRightClickMenuItem() {
+        override fun getName(): String = "Change"
+
+        override fun onClick(pos: Int) {
             rootWidget.showModelAssetSelectionDialog {
                 Gdx.app.debug(PluginConstants.LOG_TAG, "Change $pos. model to ${it.name}")
                 changeModelInTerrainObjectsLayerAsset(textureGrid, component.terrainObjectsLayerAsset, it, pos)
             }
         }
+    }
 
-        override fun onRemove(pos: Int) {
+    private class TerrainManagerTextureGridRightClickRemoveMenuItem(
+        val component: TerrainObjectsManagerComponent
+    ) : BaseTextureGridRightClickMenuItem() {
+        override fun getName(): String = "Remove"
+
+        override fun onClick(pos: Int) {
             Gdx.app.debug(PluginConstants.LOG_TAG, "Remove $pos. model")
             removeModelInTerrainObjectsLayerAsset(textureGrid, component.terrainObjectsLayerAsset, pos)
         }
-
     }
 
     private class TextureGridListenerImpl(
         val component: TerrainObjectsComponent,
-        val selectedModel: SelectedModel,
-        val rootWidget: RootWidget
+        val selectedModel: SelectedModel
     ) : BaseTextureGridListenerImpl() {
         lateinit var objectButtonPanel: RootWidget
 
@@ -425,8 +452,17 @@ object ComponentWidgetCreator {
                 applySelectedModelTransformations(selectedModel)
             }
         }
+    }
 
-        override fun onChange(pos: Int) {
+    private class TextureGridRightClickChangeMenuItem(
+        val component: TerrainObjectsComponent,
+        val rootWidget: RootWidget
+    ) : BaseTextureGridRightClickMenuItem() {
+        lateinit var objectButtonPanel: RootWidget
+
+        override fun getName(): String = "Change"
+
+        override fun onClick(pos: Int) {
             rootWidget.showModelAssetSelectionDialog {
                 Gdx.app.debug(PluginConstants.LOG_TAG, "Change $pos. model to ${it.name}")
                 changeModelInTerrainObjectsLayerAsset(textureGrid, component.terrainObjectsLayerAsset, it, pos)
@@ -435,8 +471,17 @@ object ComponentWidgetCreator {
                 PropertyManager.toolManager.deactivateCustomTool()
             }
         }
+    }
 
-        override fun onRemove(pos: Int) {
+
+    private class TextureGridRightClickRemoveMenuItem(
+        val component: TerrainObjectsComponent
+    ) : BaseTextureGridRightClickMenuItem() {
+        lateinit var objectButtonPanel: RootWidget
+
+        override fun getName(): String = "Remove"
+
+        override fun onClick(pos: Int) {
             Gdx.app.debug(PluginConstants.LOG_TAG, "Remove $pos. model")
             removeModelInTerrainObjectsLayerAsset(textureGrid, component.terrainObjectsLayerAsset, pos)
 
@@ -446,6 +491,10 @@ object ComponentWidgetCreator {
     }
 
     private abstract class BaseTextureGridListenerImpl : TextureGridListener {
+        lateinit var textureGrid: TextureGrid
+    }
+
+    private abstract class BaseTextureGridRightClickMenuItem : TextureGridRightClickMenuItem {
         lateinit var textureGrid: TextureGrid
     }
 
