@@ -1,10 +1,12 @@
 package com.github.dgzt.mundus.plugin.terrainobjects.runtime.component;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g3d.RenderableProvider;
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.asset.TerrainObjectsAsset;
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.constant.PluginConstants;
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.model.TerrainObject;
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.renderer.TerrainObjectsRenderer;
+import com.github.dgzt.mundus.plugin.terrainobjects.runtime.renderer.TerrainObjectsRendererInstancedImpl;
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.renderer.TerrainObjectsRendererModelCacheImpl;
 import com.mbrlabs.mundus.commons.scene3d.GameObject;
 import com.mbrlabs.mundus.commons.scene3d.components.Component;
@@ -18,7 +20,11 @@ public class TerrainObjectsComponent extends AbstractTerrainObjectsComponent imp
 
     public TerrainObjectsComponent(final GameObject go) {
         super(go);
-        renderer = new TerrainObjectsRendererModelCacheImpl();
+        if (Gdx.gl30 != null) {
+            renderer = new TerrainObjectsRendererInstancedImpl();
+        } else {
+            renderer = new TerrainObjectsRendererModelCacheImpl();
+        }
         nextTerrainObjectId = 0;
     }
 
