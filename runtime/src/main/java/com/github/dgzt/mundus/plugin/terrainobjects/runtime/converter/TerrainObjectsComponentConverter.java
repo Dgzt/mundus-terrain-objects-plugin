@@ -9,6 +9,7 @@ import com.github.dgzt.mundus.plugin.terrainobjects.runtime.asset.TerrainObjects
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.component.AbstractTerrainObjectsComponent;
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.component.TerrainObjectsComponent;
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.component.TerrainObjectsManagerComponent;
+import com.github.dgzt.mundus.plugin.terrainobjects.runtime.config.RuntimeConfig;
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.constant.PluginConstants;
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.exception.ModelAssetNotFoundException;
 import com.github.dgzt.mundus.plugin.terrainobjects.runtime.exception.TerrainObjectsCustomAssetNotFoundException;
@@ -24,9 +25,15 @@ import com.mbrlabs.mundus.commons.scene3d.components.Component;
 
 public class TerrainObjectsComponentConverter implements CustomComponentConverter {
 
+    private final RuntimeConfig config;
     private final Json json;
 
     public TerrainObjectsComponentConverter() {
+        this(new RuntimeConfig());
+    }
+
+    public TerrainObjectsComponentConverter(final RuntimeConfig config) {
+        this.config = config;
         json = new Json();
     }
 
@@ -71,7 +78,7 @@ public class TerrainObjectsComponentConverter implements CustomComponentConverte
         final boolean hasTerrainObjectsAsset = hasTerrainObjectsAsset(objectMap);
 
         final AbstractTerrainObjectsComponent component = (hasTerrainObjectsAsset) ?
-                new TerrainObjectsComponent(gameObject) :
+                new TerrainObjectsComponent(gameObject, config.isUseInstances()) :
                 new TerrainObjectsManagerComponent(gameObject);
 
         component.setTerrainObjectsLayerAsset(getTerrainObjectsLayerAsset(objectMap));

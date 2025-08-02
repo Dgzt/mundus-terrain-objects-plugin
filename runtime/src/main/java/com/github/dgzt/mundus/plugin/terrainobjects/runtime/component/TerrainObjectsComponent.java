@@ -19,12 +19,23 @@ public class TerrainObjectsComponent extends AbstractTerrainObjectsComponent imp
     private final TerrainObjectsRenderer renderer;
 
     public TerrainObjectsComponent(final GameObject go) {
+        this(go, false);
+    }
+
+    public TerrainObjectsComponent(final GameObject go, final boolean useInstances) {
         super(go);
-        if (Gdx.gl30 != null) {
-            renderer = new TerrainObjectsRendererInstancedImpl();
+
+        if (useInstances) {
+            if (Gdx.gl30 != null) {
+                renderer = new TerrainObjectsRendererInstancedImpl();
+            } else {
+                Gdx.app.log(PluginConstants.LOG_TAG, "GL 30 is not available, uses model cache implementation instead of instances implementation!");
+                renderer = new TerrainObjectsRendererModelCacheImpl();
+            }
         } else {
             renderer = new TerrainObjectsRendererModelCacheImpl();
         }
+
         nextTerrainObjectId = 0;
     }
 
