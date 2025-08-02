@@ -37,6 +37,11 @@ java {
     withSourcesJar()
 }
 
+tasks.jar {
+    from("src/main/java") {
+        include("**/*.glsl")
+    }
+}
 
 tasks.named<Test>("test") {
     // Use JUnit Platform for unit tests.
